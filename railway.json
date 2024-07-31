@@ -1,0 +1,10 @@
+{
+    "build": {
+      "builder": "Docker",
+      "dockerfilePath": "./Dockerfile"
+    },
+    "start": {
+      "cmd": "npm run start"
+    }
+  }
+  
