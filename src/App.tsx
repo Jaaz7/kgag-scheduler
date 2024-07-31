@@ -19,7 +19,7 @@ function App() {
       <GitHubBanner />
       <RefineKbarProvider>
         <AntdApp>
-          <DevtoolsProvider>
+          {/* <DevtoolsProvider> */}
             <Refine
               dataProvider={dataProvider}
               liveProvider={liveProvider}
@@ -45,8 +45,8 @@ function App() {
               <UnsavedChangesNotifier />
               <DocumentTitleHandler />
             </Refine>
-            <DevtoolsPanel />
-          </DevtoolsProvider>
+            {/* <DevtoolsPanel /> */}
+          {/* </DevtoolsProvider> */}
         </AntdApp>
       </RefineKbarProvider>
     </BrowserRouter>
