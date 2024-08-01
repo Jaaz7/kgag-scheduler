@@ -1372,110 +1372,112 @@ export const CompanyContactsTable = () => {
   });
 
   return (
-    <Card
-      headStyle={{
+  <Card
+    styles={{
+      header: {
         borderBottom: "1px solid #D9D9D9",
         marginBottom: "1px",
+      },
+      body: { padding: 0 },
+    }}
+    title={
+      <Space size="middle">
+        <TeamOutlined />
+        <Text>Contacts</Text>
+      </Space>
+    }
+    // property used to render additional content in the top-right corner of the card
+    extra={
+      <>
+        <Text className="tertiary">Total contacts: </Text>
+        <Text strong>
+          {/* if pagination is not disabled and total is provided then show the total */}
+          {tableProps?.pagination !== false && tableProps.pagination?.total}
+        </Text>
+      </>
+    }
+  >
+    <Table
+      {...tableProps}
+      rowKey="id"
+      pagination={{
+        ...tableProps.pagination,
+        showSizeChanger: false, // hide the page size changer
       }}
-      bodyStyle={{ padding: 0 }}
-      title={
-        <Space size="middle">
-          <TeamOutlined />
-          <Text>Contacts</Text>
-        </Space>
-      }
-      // property used to render additional content in the top-right corner of the card
-      extra={
-        <>
-          <Text className="tertiary">Total contacts: </Text>
-          <Text strong>
-            {/* if pagination is not disabled and total is provided then show the total */}
-            {tableProps?.pagination !== false && tableProps.pagination?.total}
-          </Text>
-        </>
-      }
     >
-      <Table
-        {...tableProps}
-        rowKey="id"
-        pagination={{
-          ...tableProps.pagination,
-          showSizeChanger: false, // hide the page size changer
-        }}
-      >
-        <Table.Column<Contact>
-          title="Name"
-          dataIndex="name"
-          render={(_, record) => (
-            <Space>
-              <CustomAvatar name={record.name} src={record.avatarUrl} />
-              <Text
-                style={{
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {record.name}
-              </Text>
-            </Space>
-          )}
-          // specify the icon that should be used for filtering
-          filterIcon={<SearchOutlined />}
-          // render the filter dropdown
-          filterDropdown={(props) => (
-            <FilterDropdown {...props}>
-              <Input placeholder="Search Name" />
-            </FilterDropdown>
-          )}
-        />
-        <Table.Column
-          title="Title"
-          dataIndex="jobTitle"
-          filterIcon={<SearchOutlined />}
-          filterDropdown={(props) => (
-            <FilterDropdown {...props}>
-              <Input placeholder="Search Title" />
-            </FilterDropdown>
-          )}
-        />
-        <Table.Column<Contact>
-          title="Stage"
-          dataIndex="status"
-          // render the status tag for each contact
-          render={(_, record) => <ContactStatusTag status={record.status} />}
-          // allow filtering by selecting multiple status options
-          filterDropdown={(props) => (
-            <FilterDropdown {...props}>
-              <Select
-                style={{ width: "200px" }}
-                mode="multiple" // allow multiple selection
-                placeholder="Select Stage"
-                options={statusOptions}
-              ></Select>
-            </FilterDropdown>
-          )}
-        />
-        <Table.Column<Contact>
-          dataIndex="id"
-          width={112}
-          render={(_, record) => (
-            <Space>
-              <Button
-                size="small"
-                href={`mailto:${record.email}`}
-                icon={<MailOutlined />}
-              />
-              <Button
-                size="small"
-                href={`tel:${record.phone}`}
-                icon={<PhoneOutlined />}
-              />
-            </Space>
-          )}
-        />
-      </Table>
-    </Card>
-  );
-};
+      <Table.Column<Contact>
+        title="Name"
+        dataIndex="name"
+        render={(_, record) => (
+          <Space>
+            <CustomAvatar name={record.name} src={record.avatarUrl} />
+            <Text
+              style={{
+                whiteSpace: "nowrap",
+              }}
+            >
+              {record.name}
+            </Text>
+          </Space>
+        )}
+        // specify the icon that should be used for filtering
+        filterIcon={<SearchOutlined />}
+        // render the filter dropdown
+        filterDropdown={(props) => (
+          <FilterDropdown {...props}>
+            <Input placeholder="Search Name" />
+          </FilterDropdown>
+        )}
+      />
+      <Table.Column
+        title="Title"
+        dataIndex="jobTitle"
+        filterIcon={<SearchOutlined />}
+        filterDropdown={(props) => (
+          <FilterDropdown {...props}>
+            <Input placeholder="Search Title" />
+          </FilterDropdown>
+        )}
+      />
+      <Table.Column<Contact>
+        title="Stage"
+        dataIndex="status"
+        // render the status tag for each contact
+        render={(_, record) => <ContactStatusTag status={record.status} />}
+        // allow filtering by selecting multiple status options
+        filterDropdown={(props) => (
+          <FilterDropdown {...props}>
+            <Select
+              style={{ width: "200px" }}
+              mode="multiple" // allow multiple selection
+              placeholder="Select Stage"
+              options={statusOptions}
+            ></Select>
+          </FilterDropdown>
+        )}
+      />
+      <Table.Column<Contact>
+        dataIndex="id"
+        width={112}
+        render={(_, record) => (
+          <Space>
+            <Button
+              size="small"
+              href={`mailto:${record.email}`}
+              icon={<MailOutlined />}
+            />
+            <Button
+              size="small"
+              href={`tel:${record.phone}`}
+              icon={<PhoneOutlined />}
+            />
+          </Space>
+        )}
+      />
+    </Table>
+  </Card>
+);
+
 ```
 
 </details>

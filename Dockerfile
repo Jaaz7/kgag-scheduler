@@ -1,16 +1,16 @@
-# Use the official Node.js image with the refinedev base
+# Use the official Node.js image as the base
 FROM node:18-alpine AS base
 
 # Set the working directory
 WORKDIR /app
 
-# Stage for dependencies
+# Stage for installing dependencies
 FROM base as deps
 
 # Copy lock files and package.json
 COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* .npmrc* ./
 
-# Install dependencies
+# Install dependencies based on the lock file
 RUN \
   if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
   elif [ -f package-lock.json ]; then npm ci; \
@@ -39,14 +39,14 @@ FROM base as runner
 # Set environment variable
 ENV NODE_ENV production
 
-# Install `serve` globally
+# Install `serve` globally to serve the build
 RUN npm install -g serve
 
 # Copy built files from builder stage
 COPY --from=builder /app/dist ./dist
 
-# Set user to a non-root user (optional, can be removed if not needed)
+# Set the user to the node user
 USER node
 
-# Serve the built application
-CMD ["serve", "-s", "dist", "-l", "4173"]
+# Serve the built application on all network interfaces
+CMD ["serve", "-s", "dist", "-l", "4173", "--host", "0.0.0.0"]
