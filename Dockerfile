@@ -1,11 +1,11 @@
-# Use the official Node.js image as the base
-FROM node:18-alpine AS base
+# Base image
+FROM node:16-alpine AS base
 
-# Set the working directory
+# Set working directory
 WORKDIR /app
 
 # Stage for installing dependencies
-FROM base as deps
+FROM base AS deps
 
 # Copy lock files and package.json
 COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* .npmrc* ./
@@ -14,27 +14,27 @@ COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* .npmrc* ./
 RUN \
   if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
   elif [ -f package-lock.json ]; then npm ci; \
-  elif [ -f pnpm-lock.yaml ]; then yarn global add pnpm && pnpm i --frozen-lockfile; \
+  elif [ -f pnpm-lock.yaml ]; then npm install -g pnpm && pnpm install --frozen-lockfile; \
   else echo "Lockfile not found." && exit 1; \
   fi
 
 # Stage for building the application
-FROM base as builder
+FROM base AS builder
 
 # Set environment variable
 ENV NODE_ENV production
 
-# Copy node_modules from deps stage
-COPY --from=deps /app/node_modules ./node_modules
-
 # Copy application files
 COPY . .
+
+# Copy node_modules from deps stage
+COPY --from=deps /app/node_modules ./node_modules
 
 # Build the application
 RUN npm run build
 
 # Stage for running the application
-FROM base as runner
+FROM node:16-alpine AS runner
 
 # Set environment variable
 ENV NODE_ENV production
@@ -45,8 +45,8 @@ RUN npm install -g serve
 # Copy built files from builder stage
 COPY --from=builder /app/dist ./dist
 
-# Set the user to the node user
-USER node
+# Expose the port that the app will run on
+EXPOSE 5000
 
-# Serve the built application on all network interfaces
-CMD ["serve", "-s", "dist", "-l", "4173", "--host", "0.0.0.0"]
+# Command to run the application
+CMD ["serve", "-s", "dist"]

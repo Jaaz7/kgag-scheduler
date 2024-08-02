@@ -8,14 +8,15 @@ export default defineConfig({
     minify: 'esbuild',
   },
   server: {
-    port: 3000,
+    host: '0.0.0.0',
+    port: parseInt(process.env.PORT) || 3000,
   },
   define: {
     'process.env': {
       VITE_SUPABASE_URL: JSON.stringify(process.env.VITE_SUPABASE_URL),
       VITE_SUPABASE_KEY: JSON.stringify(process.env.VITE_SUPABASE_KEY),
       VITE_DEBUG: JSON.stringify(process.env.VITE_DEBUG),
-      VITE_ENV: JSON.stringify(process.env.VITE_ENV),
+      VITE_ENV: JSON.stringify (process.env.VITE_ENV),
     },
   },
 });
