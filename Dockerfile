@@ -46,7 +46,7 @@ RUN npm install -g serve
 COPY --from=builder /app/dist ./dist
 
 # Expose the port that the app will run on
-EXPOSE 5000
+EXPOSE 3000
 
 # Command to run the application
 CMD ["serve", "-s", "dist"]
