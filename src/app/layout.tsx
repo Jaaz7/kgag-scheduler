@@ -40,7 +40,7 @@ export default function RootLayout({
             <AntdRegistry>
               <ColorModeContextProvider defaultMode={defaultMode}>
                 <DevtoolsProvider>
-                  {/* <RealTimeProvider> */}
+                  <RealTimeProvider>
                     <Refine
                       routerProvider={routerProvider}
                       authProvider={authProviderClient}
@@ -56,7 +56,7 @@ export default function RootLayout({
                       {children}
                       <RefineKbar />
                     </Refine>
-                  {/* </RealTimeProvider> */}
+                  </RealTimeProvider>
                 </DevtoolsProvider>
               </ColorModeContextProvider>
             </AntdRegistry>
