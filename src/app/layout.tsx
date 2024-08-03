@@ -1,4 +1,5 @@
 import { DevtoolsProvider } from "@providers/devtools";
+import { RealTimeProvider } from "../providers/data-provider/realTimeProvider";
 import { useNotificationProvider } from "@refinedev/antd";
 import { GitHubBanner, Refine } from "@refinedev/core";
 import { RefineKbar, RefineKbarProvider } from "@refinedev/kbar";
@@ -39,21 +40,23 @@ export default function RootLayout({
             <AntdRegistry>
               <ColorModeContextProvider defaultMode={defaultMode}>
                 <DevtoolsProvider>
-                  <Refine
-                    routerProvider={routerProvider}
-                    authProvider={authProviderClient}
-                    dataProvider={dataProvider}
-                    notificationProvider={useNotificationProvider}
-                    options={{
-                      syncWithLocation: true,
-                      warnWhenUnsavedChanges: true,
-                      useNewQueryKeys: true,
-                      projectId: "fSe5j5-MWays6-B3H6IM",
-                    }}
-                  >
-                    {children}
-                    <RefineKbar />
-                  </Refine>
+                  <RealTimeProvider>
+                    <Refine
+                      routerProvider={routerProvider}
+                      authProvider={authProviderClient}
+                      dataProvider={dataProvider}
+                      notificationProvider={useNotificationProvider}
+                      options={{
+                        syncWithLocation: true,
+                        warnWhenUnsavedChanges: true,
+                        useNewQueryKeys: true,
+                        projectId: "fSe5j5-MWays6-B3H6IM",
+                      }}
+                    >
+                      {children}
+                      <RefineKbar />
+                    </Refine>
+                  </RealTimeProvider>
                 </DevtoolsProvider>
               </ColorModeContextProvider>
             </AntdRegistry>
