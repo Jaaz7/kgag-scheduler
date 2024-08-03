@@ -68,7 +68,7 @@ export const dataProvider: DataProvider = {
     return { data } as DeleteOneResponse<any>;
   },
   getApiUrl: () => {
-    return import.meta.env.sUPABASE_URL || "";
+    return process.env.NEXT_PUBLIC_SUPABASE_URL || "";
   },
 };
 
