@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { supabaseBrowserClient } from '../../utils/supabase/client';
+// import { supabaseBrowserClient } from '../../utils/supabase/client';
 
 interface RealTimeProviderProps {
   children: ReactNode;
@@ -22,6 +22,7 @@ export const RealTimeProvider: React.FC<RealTimeProviderProps> = ({ children }) 
     const [data, setData] = useState<DataItem[]>([]);
   
     useEffect(() => {
+      /*
       const fetchInitialData = async () => {
         const { data: initialData, error } = await supabaseBrowserClient
           .from('TBD')
@@ -54,6 +55,7 @@ export const RealTimeProvider: React.FC<RealTimeProviderProps> = ({ children }) 
       return () => {
         channel.unsubscribe();
       };
+      */
     }, []);
 
   return (
