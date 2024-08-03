@@ -1,5 +1,5 @@
 # Base image
-FROM node:16-alpine AS base
+FROM node:18-alpine AS base
 
 # Set working directory
 WORKDIR /app
@@ -22,7 +22,7 @@ RUN \
 FROM base AS builder
 
 # Set environment variable
-ENV NODE_ENV production
+ENV NODE_ENV=production
 
 # Copy application files
 COPY . .
@@ -37,16 +37,18 @@ RUN npm run build
 FROM node:16-alpine AS runner
 
 # Set environment variable
-ENV NODE_ENV production
+ENV NODE_ENV=production
 
 # Install `serve` globally to serve the build
 RUN npm install -g serve
 
 # Copy built files from builder stage
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/server.mjs ./server.mjs
+COPY --from=builder /app/node_modules ./node_modules
 
 # Expose the port that the app will run on
-EXPOSE 3000
+EXPOSE 8080
 
 # Command to run the application
-CMD ["serve", "-s", "dist"]
+CMD ["node", "server.mjs"]
