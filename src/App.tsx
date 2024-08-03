@@ -1,3 +1,4 @@
+import React from "react";
 import { GitHubBanner, Refine, WelcomePage } from "@refinedev/core";
 import { DevtoolsPanel, DevtoolsProvider } from "@refinedev/devtools";
 import { RefineKbar, RefineKbarProvider } from "@refinedev/kbar";
@@ -14,7 +15,7 @@ import { myAuthProvider } from "./providers/auth";
 import { Home, ForgotPassword, Login, Register } from "./pages";
 
 function App() {
-  const isDevelopment = import.meta.env.MODE === "development";
+  const isDevelopment = process.env.MODE === "development";
 
   if (isDevelopment) {
     console.log("You are in development mode");

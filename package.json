@@ -1,70 +1,47 @@
 {
-  "name": "kgag-scheduler",
+  "name": "fifty-parents-nail",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
-  "dependencies": {
-    "@ant-design/icons": "^5.4.0",
-    "@refinedev/antd": "^5.42.0",
-    "@refinedev/cli": "^2.16.36",
-    "@refinedev/core": "^4.53.0",
-    "@refinedev/devtools": "^1.2.6",
-    "@refinedev/kbar": "^1.3.12",
-    "@refinedev/nestjs-query": "^1.3.2",
-    "@refinedev/react-router-v6": "^4.5.11",
-    "@supabase/supabase-js": "^2.45.0",
-    "antd": "^5.19.4",
-    "dotenv": "^16.4.5",
-    "express": "^4.18.2",
-    "graphql-tag": "^2.12.6",
-    "graphql-ws": "^5.16.0",
-    "patch-package": "^8.0.0",
-    "postinstall-postinstall": "^2.1.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-router-dom": "^6.25.1",
-    "serve": "^14.2.3"
-  },
-  "devDependencies": {
-    "@graphql-codegen/cli": "^5.0.2",
-    "@graphql-codegen/import-types-preset": "^3.0.0",
-    "@graphql-codegen/typescript": "^4.0.9",
-    "@graphql-codegen/typescript-operations": "^4.2.3",
-    "@types/node": "^20.14.12",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
-    "@typescript-eslint/eslint-plugin": "^7.18.0",
-    "@typescript-eslint/parser": "^7.18.0",
-    "@vitejs/plugin-react": "^4.3.1",
-    "eslint": "^8.56.0",
-    "eslint-plugin-react-hooks": "^4.6.2",
-    "eslint-plugin-react-refresh": "^0.4.9",
-    "prettier": "^3.3.3",
-    "typescript": "^5.5.4",
-    "vite": "^5.3.5",
-    "vite-tsconfig-paths": "^4.3.2"
+  "engines": {
+    "node": ">=18.0.0"
   },
   "scripts": {
-    "dev": "refine dev",
-    "build": "refine build && tsc",
-    "start": "node server.mjs",
-    "refine": "refine",
-    "codegen": "graphql-codegen",
-    "serve": "vite preview --host 0.0.0.0 --port $PORT"
+    "dev": "cross-env NODE_OPTIONS=--max_old_space_size=4096 refine dev",
+    "build": "refine build",
+    "start": "refine start",
+    "lint": "next lint",
+    "refine": "refine"
   },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+  "dependencies": {
+    "@ant-design/icons": "^5.0.1",
+    "@ant-design/nextjs-registry": "^1.0.0",
+    "@refinedev/antd": "^5.37.4",
+    "@refinedev/cli": "^2.16.21",
+    "@refinedev/core": "^4.47.1",
+    "@refinedev/devtools": "^1.1.32",
+    "@refinedev/kbar": "^1.3.6",
+    "@refinedev/nextjs-router": "^6.0.0",
+    "@refinedev/react-router-v6": "^4.5.11",
+    "@refinedev/supabase": "^5.7.4",
+    "@supabase/ssr": "^0.3.0",
+    "antd": "^5.0.5",
+    "js-cookie": "^3.0.5",
+    "next": "^14.1.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
+  "devDependencies": {
+    "@types/js-cookie": "^3.0.6",
+    "@types/node": "^18.16.2",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "cross-env": "^7.0.3",
+    "eslint": "^8",
+    "eslint-config-next": "^14.1.0",
+    "typescript": "^5.4.2"
   },
   "refine": {
-    "projectId": "0PUiNW-Kk5der-rn5HKm"
+    "projectId": "fSe5j5-MWays6-B3H6IM"
   }
 }
