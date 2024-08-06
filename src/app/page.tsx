@@ -2,12 +2,12 @@
 
 import { Suspense } from "react";
 
-import { WelcomePage } from "@refinedev/core";
-
 export default function IndexPage() {
   return (
     <Suspense>
-      <WelcomePage />
+      <div>
+        <h3>INDEX</h3>
+      </div>
     </Suspense>
   );
 }

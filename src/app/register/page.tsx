@@ -9,7 +9,11 @@ export default async function Register() {
     redirect(data?.redirectTo || "/");
   }
 
-  return <AuthPage type="register" />;
+  return (
+    <div>
+      <h3>REGISTER</h3>
+    </div>
+  );
 }
 
 async function getData() {

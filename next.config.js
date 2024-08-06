@@ -10,7 +10,6 @@ const nextConfig = {
       '@providers': path.resolve(__dirname, 'src/providers'),
       '@contexts': path.resolve(__dirname, 'src/contexts'),
       '@utils': path.resolve(__dirname, 'src/utils'),
-      '@pages': path.resolve(__dirname, 'pages'),
       '@': path.resolve(__dirname, 'src')
     };
     return config;

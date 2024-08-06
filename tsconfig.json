@@ -24,7 +24,6 @@
       "@providers/*": ["src/providers/*"],
       "@contexts/*": ["src/contexts/*"],
       "@utils/*": ["src/utils/*"],
-      "@pages/*": ["pages/*"],
       "@/*": ["src/*"]
     },
     "incremental": true

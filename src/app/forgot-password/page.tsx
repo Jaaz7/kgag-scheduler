@@ -1,4 +1,3 @@
-import { AuthPage } from "@components/auth-page";
 import { authProviderServer } from "@providers/auth-provider";
 import { redirect } from "next/navigation";
 
@@ -9,7 +8,11 @@ export default async function ForgotPassword() {
     redirect(data?.redirectTo || "/");
   }
 
-  return <AuthPage type="forgotPassword" />;
+  return (
+    <div>
+      <h3>FORGOT-PASWORD</h3>
+    </div>
+  );
 }
 
 async function getData() {
