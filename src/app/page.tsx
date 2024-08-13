@@ -1,13 +1,5 @@
-"use client";
-
-import { Suspense } from "react";
+import LoginForm from '@/components/auth/LoginForm';
 
 export default function IndexPage() {
-  return (
-    <Suspense>
-      <div>
-        <h3>INDEX</h3>
-      </div>
-    </Suspense>
-  );
+    return <LoginForm />;
 }

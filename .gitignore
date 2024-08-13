@@ -1,3 +1,7 @@
+# Ignore generated files
+fifty-parents-nail@0.1.0
+tsconfig.tsbuildinfo
+
 # Node.js
 node_modules/
 npm-debug.log*

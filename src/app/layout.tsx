@@ -1,50 +1,41 @@
-import { DevtoolsProvider } from "@providers/devtools";
-import { RealTimeProvider } from "../providers/data-provider/realTimeProvider";
+import React, { Suspense } from "react";
+import { DevtoolsProvider } from "@lib/devtools";
+import { RealTimeProvider } from "@/lib/data-provider/realTimeProvider";
 import { useNotificationProvider } from "@refinedev/antd";
 import { Refine } from "@refinedev/core";
 import { RefineKbar, RefineKbarProvider } from "@refinedev/kbar";
 import routerProvider from "@refinedev/nextjs-router";
-import { Metadata } from "next";
-import { cookies } from "next/headers";
-import React, { Suspense } from "react";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
-import { ColorModeContextProvider } from "@contexts/color-mode";
-import { authProviderClient } from "@providers/auth-provider";
-import { dataProvider } from "@providers/data-provider";
-import { Layout } from "@components/index-layout";
-import "@refinedev/antd/dist/reset.css";
+import { ColorModeContextProvider } from "@contexts/ColorModeContext";
+import { authProviderClient } from "@/lib/auth-provider";
+import { dataProvider } from "@/lib/data-provider";
+import AuthWrapper from "@/components/layouts/AuthWrapper";
+import { resources } from "@/components/common/resources";
+import { Spin } from "antd";
 
-export const metadata: Metadata = {
-  title: "Scheduler",
-  description: "",
-  icons: {
-    icon: "/favicon.ico",
-  },
-};
+import "@/styles/globals.css"; 
+import "@refinedev/antd/dist/reset.css";
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
-  const cookieStore = cookies();
-  const theme = cookieStore.get("theme");
-  const defaultMode = theme?.value === "dark" ? "dark" : "light";
-
+}) {
   return (
     <html lang="en">
       <body>
-        <Suspense>
-          <RefineKbarProvider>
-            <AntdRegistry>
-              <ColorModeContextProvider defaultMode={defaultMode}>
-                <DevtoolsProvider>
-                  <RealTimeProvider>
+        <RefineKbarProvider>
+          <AntdRegistry>
+            <ColorModeContextProvider>
+              <DevtoolsProvider>
+                <RealTimeProvider>
+                  <Suspense fallback={<Spin size="large" />}>
                     <Refine
                       routerProvider={routerProvider}
                       authProvider={authProviderClient}
                       dataProvider={dataProvider}
                       notificationProvider={useNotificationProvider}
+                      resources={resources}
                       options={{
                         syncWithLocation: true,
                         warnWhenUnsavedChanges: true,
@@ -52,16 +43,15 @@ export default function RootLayout({
                         projectId: "fSe5j5-MWays6-B3H6IM",
                       }}
                     >
-                      {" "}
-                      <Layout>{children}</Layout>
+                      <AuthWrapper>{children}</AuthWrapper>
                       <RefineKbar />
                     </Refine>
-                  </RealTimeProvider>
-                </DevtoolsProvider>
-              </ColorModeContextProvider>
-            </AntdRegistry>
-          </RefineKbarProvider>
-        </Suspense>
+                  </Suspense>
+                </RealTimeProvider>
+              </DevtoolsProvider>
+            </ColorModeContextProvider>
+          </AntdRegistry>
+        </RefineKbarProvider>
       </body>
     </html>
   );
