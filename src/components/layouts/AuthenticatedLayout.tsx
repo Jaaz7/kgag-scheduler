@@ -1,76 +1,38 @@
-"use client";
-
-import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useEffect, useState, Suspense } from "react";
+import { usePathname } from "next/navigation";
 import { ThemedLayoutV2, ThemedTitleV2 } from "@components/sidebar";
 import { Header } from "@components/header/Header";
-import { authProviderClient } from "@lib/auth-provider";
-import { supabaseBrowserClient } from "@lib/supabase/client";
-import { Spin } from "antd";
+import NotFound from "@/app/not-found";
 import "@/styles/globals.css";
+import { Spin } from "antd";
+
+interface AuthenticatedLayoutProps {
+  children: React.ReactNode;
+}
 
 export default function AuthenticatedLayout({
   children,
-}: {
-  children: React.ReactNode;
-}) {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const router = useRouter();
+}: AuthenticatedLayoutProps) {
+  const pathname = usePathname();
+  const [isValidPath, setIsValidPath] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const { data: authListener } = supabaseBrowserClient.auth.onAuthStateChange(
-      (_, session) => {
-        if (session) {
-          setIsAuthenticated(true);
-        } else {
-          setIsAuthenticated(false);
-          router.push("/");
-        }
-      }
-    );
+    const validPaths = ["/", "/schedule-hb", "/manage-users"]; // Include root path "/"
 
-    return () => {
-      authListener?.subscription.unsubscribe();
-    };
-  }, [router]);
+    if (validPaths.includes(pathname)) {
+      setIsValidPath(true);
+    } else {
+      setIsValidPath(false);
+    }
+  }, [pathname]);
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const response = await authProviderClient.check();
-        if (response.authenticated) {
-          setIsAuthenticated(true);
-        } else {
-          setIsAuthenticated(false);
-          router.push("/");
-        }
-      } catch (error) {
-        console.error("Error during authentication check:", error);
-        setIsAuthenticated(false);
-        router.push("/");
-      }
-    };
+  console.log("Rendering AuthenticatedLayout:");
+  console.log("isValidPath:", isValidPath);
+  console.log("pathname:", pathname);
 
-    checkAuth();
-  }, [router]);
-
-  if (isAuthenticated === null) {
-    return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-        }}
-      >
-        <Spin size="large" />
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return null;
+  if (isValidPath === false) {
+    console.log("Rendering NotFound component.");
+    return <NotFound />;
   }
 
   return (
@@ -80,7 +42,9 @@ export default function AuthenticatedLayout({
         <ThemedTitleV2 {...titleProps} text="HB Shop" link="/schedule-hb" />
       )}
     >
-      {children}
+      <Suspense fallback={<Spin size="large" />}>
+        {children}
+      </Suspense>
     </ThemedLayoutV2>
   );
 }

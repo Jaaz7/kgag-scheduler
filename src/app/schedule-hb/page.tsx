@@ -1,23 +1,32 @@
 "use client";
 
-import React, { Suspense } from 'react';
-import { Calendar } from 'antd';
-import type { CalendarProps } from 'antd';
-import type { Dayjs } from 'dayjs';
-import { Spin } from 'antd';
+import React, { useState, useEffect, Suspense } from "react";
+import { Calendar } from "antd";
+import type { CalendarProps } from "antd";
+import type { Dayjs } from "dayjs";
 
-const App: React.FC = () => {
-  const onPanelChange = (value: Dayjs, mode: CalendarProps<Dayjs>['mode']) => {
-    console.log(value.format('YYYY-MM-DD'), mode);
+const Schedule: React.FC = () => {
+  const onPanelChange = (value: Dayjs, mode: CalendarProps<Dayjs>["mode"]) => {
+    console.log(value.format("YYYY-MM-DD"), mode);
   };
 
   return <Calendar onPanelChange={onPanelChange} />;
 };
 
 export default function ScheduleHBPage() {
-  return (
-    <Suspense fallback={<Spin size="large" />}>
-      <App />
+  const [shouldRender, setShouldRender] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShouldRender(true);
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  return shouldRender ? (
+    <Suspense fallback={<div />}>
+      <Schedule />
     </Suspense>
-  );
+  ) : null;
 }

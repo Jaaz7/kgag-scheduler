@@ -24,8 +24,8 @@ export const ErrorComponent: React.FC<RefineErrorPageProps> = () => {
               action: action,
               resource: resource?.name,
             },
-            `You may have forgotten to add the "${action}" component to "${resource?.name}" resource.`,
-          ),
+            `You may have forgotten to add the "${action}" component to "${resource?.name}" resource.`
+          )
         );
       }
     }
@@ -41,7 +41,7 @@ export const ErrorComponent: React.FC<RefineErrorPageProps> = () => {
             <Typography.Text>
               {translate(
                 "pages.error.404",
-                "Sorry, the page you visited does not exist.",
+                "Sorry, the page you visited does not exist."
               )}
             </Typography.Text>
             {errorMessage && (

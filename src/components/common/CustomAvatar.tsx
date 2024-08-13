@@ -15,7 +15,7 @@ export const CustomAvatar = React.forwardRef<HTMLSpanElement, Props>(
         alt={name}
         size="small"
         style={{
-          backgroundColor: "#87d068",
+          backgroundColor: "#1890ff",
           display: "flex",
           alignItems: "center",
           border: "none",

@@ -16,13 +16,7 @@ import {
   RightOutlined,
   CalendarOutlined,
 } from "@ant-design/icons";
-import {
-  useTranslate,
-  useLogout,
-  useLink,
-  useNavigation,
-  useWarnAboutChange,
-} from "@refinedev/core";
+import { useTranslate, useLogout, useLink } from "@refinedev/core";
 
 import { drawerButtonStyles } from "./styles";
 import type { RefineThemedLayoutV2SiderProps } from "./types";
@@ -50,13 +44,10 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      // Set the initial path
       updatePath();
 
-      // Listen to popstate event for browser navigation (back/forward)
       window.addEventListener("popstate", updatePath);
 
-      // Overwrite the pushState and replaceState methods to catch navigation changes
       const originalPushState = window.history.pushState;
       const originalReplaceState = window.history.replaceState;
 
@@ -81,30 +72,13 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
   const direction = useContext(ConfigProvider.ConfigContext)?.direction;
   const translate = useTranslate();
   const Link = useLink();
-  const { push } = useNavigation();
-  const { warnWhen, setWarnWhen } = useWarnAboutChange();
   const { mutate: mutateLogout } = useLogout();
   const breakpoint = Grid.useBreakpoint();
   const isMobile = !breakpoint.lg;
 
   const RenderToTitle = TitleFromProps ?? ThemedTitleV2;
-
   const handleLogout = () => {
-    if (warnWhen) {
-      const confirm = window.confirm(
-        translate(
-          "warnWhenUnsavedChanges",
-          "Are you sure you want to leave? You have unsaved changes."
-        )
-      );
-
-      if (confirm) {
-        setWarnWhen(false);
-        mutateLogout();
-      }
-    } else {
-      mutateLogout();
-    }
+    mutateLogout();
   };
 
   const handleTitleClick = () => {
@@ -150,15 +124,8 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
     {
       key: "logout",
       icon: <LogoutOutlined />,
-      label: (
-        <div
-          onClick={handleLogout}
-          style={{ display: "flex", alignItems: "center" }}
-        >
-          {translate("buttons.logout", "Logout")}
-        </div>
-      ),
-      onClick: handleLogout
+      label: translate("buttons.logout", "Logout"),
+      onClick: handleLogout, // Directly attach the logout handler here
     },
   ];
 
@@ -247,8 +214,7 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
   if (fixed) {
     siderStyles.position = "fixed";
     siderStyles.top = 0;
-    siderStyles.height = "100vh";
-    siderStyles.zIndex = 999;
+    (siderStyles.height = "100vh"), (siderStyles.zIndex = 999);
   }
 
   return (

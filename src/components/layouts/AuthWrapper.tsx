@@ -1,39 +1,56 @@
 "use client";
 
-import React, { Suspense } from "react";
-import { usePathname } from "next/navigation";
+import React, { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import AuthenticatedLayout from "./AuthenticatedLayout";
 import UnauthenticatedLayout from "./UnauthenticatedLayout";
 import { Spin } from "antd";
+import { authProviderClient } from "@/lib/auth-provider";
 
 export default function AuthWrapper({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [initialLoad, setInitialLoad] = useState<boolean>(true);
+
   const pathname = usePathname();
+  const router = useRouter();
 
-  // Define routes where no layout should be applied
-  const noLayoutRoutes = ["/404", "/not-found"];
+  useEffect(() => {
+    const checkAuth = async () => {
+      const response = await authProviderClient.check();
+      setIsAuthenticated(response.authenticated);
 
-  // Handle the root path ("/") using the UnauthenticatedLayout
-  if (pathname === "/") {
+      if (!response.authenticated && pathname !== "/") {
+        router.push(response.redirectTo || "/");
+      }
+
+      setInitialLoad(false);
+    };
+
+    checkAuth();
+  }, [pathname, router]);
+
+  if (initialLoad) {
     return (
-      <Suspense fallback={<Spin size="large" />}>
-        <UnauthenticatedLayout>{children}</UnauthenticatedLayout>
-      </Suspense>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
+        <Spin size="large" />
+      </div>
     );
   }
 
-  // Handle no layout routes by returning children directly
-  if (noLayoutRoutes.includes(pathname)) {
-    return <>{children}</>;
+  if (!isAuthenticated) {
+    return <UnauthenticatedLayout>{children}</UnauthenticatedLayout>;
   }
 
-  // Default case: use the AuthenticatedLayout for all other routes
-  return (
-    <Suspense fallback={<Spin size="large" />}>
-      <AuthenticatedLayout>{children}</AuthenticatedLayout>
-    </Suspense>
-  );
+  return <AuthenticatedLayout>{children}</AuthenticatedLayout>;
 }
