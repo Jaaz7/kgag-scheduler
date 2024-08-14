@@ -43,24 +43,33 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
   };
 
   useEffect(() => {
+    const updatePath = () => {
+      setCurrentPath(window.location.pathname); // Safe to update state here
+    };
+  
     if (typeof window !== "undefined") {
       updatePath();
-
+  
       window.addEventListener("popstate", updatePath);
-
+  
+      const handleHistoryChange = () => {
+        // Use setTimeout to delay the state update until after the history changes are complete
+        setTimeout(updatePath, 0);
+      };
+  
       const originalPushState = window.history.pushState;
       const originalReplaceState = window.history.replaceState;
-
+  
       window.history.pushState = function (...args) {
         originalPushState.apply(window.history, args);
-        updatePath();
+        handleHistoryChange(); // Delay the state update
       };
-
+  
       window.history.replaceState = function (...args) {
         originalReplaceState.apply(window.history, args);
-        updatePath();
+        handleHistoryChange(); // Delay the state update
       };
-
+  
       return () => {
         window.removeEventListener("popstate", updatePath);
         window.history.pushState = originalPushState;
@@ -68,6 +77,7 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
       };
     }
   }, []);
+  
 
   const direction = useContext(ConfigProvider.ConfigContext)?.direction;
   const translate = useTranslate();

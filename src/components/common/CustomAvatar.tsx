@@ -1,13 +1,13 @@
 import React from "react";
 import { Avatar as AntdAvatar, AvatarProps } from "antd";
-import { getNameInitials } from "@/lib/date/get-name-initials";
 
 type Props = AvatarProps & {
   name?: string;
+  initials?: string;
 };
 
 export const CustomAvatar = React.forwardRef<HTMLSpanElement, Props>(
-  ({ name, style, ...rest }, ref) => {
+  ({ initials, name, style, ...rest }, ref) => {
     return (
       <AntdAvatar
         {...rest}
@@ -23,7 +23,7 @@ export const CustomAvatar = React.forwardRef<HTMLSpanElement, Props>(
         }}
         {...rest}
       >
-        {getNameInitials(name || "")}
+        {initials}
       </AntdAvatar>
     );
   }

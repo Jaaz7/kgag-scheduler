@@ -5,10 +5,12 @@ import { supabaseBrowserClient } from "@/lib/supabase/client";
 import { SettingOutlined } from "@ant-design/icons";
 import { AccountSettings } from "@/components/header/AccountSettings";
 import { Text } from "@components/common/Text";
+import { getNameInitials } from "@lib/date/get-name-initials";
 
 const CurrentUser = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<any | null>(null);
+  const [initials, setInitials] = useState("");
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -19,7 +21,28 @@ const CurrentUser = () => {
         return;
       }
 
-      setUser(data.user);
+      const { data: profileData, error: profileError } =
+        await supabaseBrowserClient
+          .from("profiles")
+          .select("*")
+          .eq("user_id", data.user?.id)
+          .single();
+
+      if (profileError) {
+        console.error("Error fetching profile:", profileError.message);
+        return;
+      }
+
+      const fullName = profileData?.name || data.user?.email;
+
+      setUser({
+        ...profileData,
+        email: data.user?.email,
+        name: fullName,
+      });
+
+      // Update to pass only the fullName
+      setInitials(getNameInitials(fullName));
     };
 
     fetchUser();
@@ -28,7 +51,7 @@ const CurrentUser = () => {
   const content = (
     <div style={{ display: "flex", flexDirection: "column" }}>
       <Text strong style={{ padding: "12px 20px" }}>
-        {user?.email} {/* Displaying the user's email */}
+        {user?.email}
       </Text>
       <div
         style={{
@@ -62,9 +85,9 @@ const CurrentUser = () => {
         content={content}
       >
         <CustomAvatar
-          name={user?.email}
+          initials={initials}
           src={user?.avatar_url}
-          size="default"
+          size="large"
           style={{ cursor: "pointer" }}
         />
       </Popover>
@@ -72,7 +95,7 @@ const CurrentUser = () => {
         <AccountSettings
           opened={isOpen}
           setOpened={setIsOpen}
-          userId={user.id}
+          userId={user.user_id}
         />
       )}
     </>
