@@ -41,7 +41,6 @@ const CurrentUser = () => {
         name: fullName,
       });
 
-      // Update to pass only the fullName
       setInitials(getNameInitials(fullName));
     };
 

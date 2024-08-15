@@ -41,7 +41,7 @@ export const AccountSettings = ({ opened, setOpened, userId }: Props) => {
   const [initials, setInitials] = useState("");
   const [loading, setLoading] = useState(false);
   const [isPasswordValid, setIsPasswordValid] = useState(false);
-  const [noPreference, setNoPreference] = useState(false); // New state for "No Preference"
+  const [noPreference, setNoPreference] = useState(false);
 
   const { data, isLoading } = useQuery<UserData, HttpError>(
     ["user", userId],
@@ -59,6 +59,67 @@ export const AccountSettings = ({ opened, setOpened, userId }: Props) => {
       return data;
     }
   );
+
+  const fetchUserEmailAndProfile = async () => {
+    try {
+      const { data: authData, error: authError } =
+        await supabaseBrowserClient.auth.getUser();
+      if (authError) {
+        throw new Error(authError.message);
+      }
+      const userEmail = authData.user?.email || "";
+
+      const { data: userData, error: userError } = await supabaseBrowserClient
+        .from("profiles")
+        .select("*")
+        .eq("user_id", userId)
+        .single();
+
+      if (userError) {
+        throw new Error(userError.message);
+      }
+
+      if (userData) {
+        const userName = userData.name || "";
+        const userType = userData.user_type || "";
+        const shiftPreference = userData.shift_preference || "no_preference";
+        const dayPreferences = userData.day_preferences.length
+          ? userData.day_preferences
+          : ["no_preference"];
+
+        form.setFieldsValue({
+          name: userName,
+          email: userEmail,
+          userType: userType,
+          avatarUrl: userData.avatarUrl,
+          shiftPreference: shiftPreference,
+          dayPreferences: dayPreferences.includes("no_preference")
+            ? []
+            : dayPreferences,
+        });
+
+        setNoPreference(dayPreferences.includes("no_preference"));
+
+        const generatedInitials = getNameInitials(userName);
+        setInitials(generatedInitials);
+      } else {
+        form.setFieldsValue({
+          email: userEmail,
+        });
+      }
+    } catch (error) {
+      console.error(
+        "Error fetching user data:",
+        error instanceof Error ? error.message : String(error)
+      );
+    }
+  };
+
+  useEffect(() => {
+    if (opened) {
+      fetchUserEmailAndProfile();
+    }
+  }, [opened]);
 
   useEffect(() => {
     const fetchUserEmailAndProfile = async () => {
@@ -145,53 +206,87 @@ export const AccountSettings = ({ opened, setOpened, userId }: Props) => {
     setOpened(false);
   };
 
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+
   const handleSave = async () => {
     try {
       setLoading(true);
       await form.validateFields();
       const values = form.getFieldsValue();
-
-      if (!data) {
-        throw new Error("User data is undefined.");
+  
+      // Ensure the session is valid
+      const { data: sessionData } = await supabaseBrowserClient.auth.getSession();
+      if (!sessionData || !sessionData.session) {
+        throw new Error("User is not authenticated.");
       }
-
+  
+      let avatarUrl = data?.avatarUrl || ""; // Default to existing avatar URL
+      const file = selectedFile;
+  
+      // Handle file upload
+      if (file) {
+        const filePath = `${userId}/${file.name}`;
+        console.log("Uploading file to:", filePath);
+  
+        const { error: uploadError, data: uploadData } = await supabaseBrowserClient.storage
+          .from("avatars")
+          .upload(filePath, file);
+  
+        if (uploadError) {
+          console.error("File upload error:", uploadError.message);
+          throw new Error(uploadError.message);
+        }
+  
+        // Generate public URL for the uploaded avatar
+        const { data: publicUrlData } = supabaseBrowserClient.storage
+          .from("avatars")
+          .getPublicUrl(filePath);
+  
+        if (!publicUrlData || !publicUrlData.publicUrl) {
+          throw new Error("Failed to generate public URL for avatar.");
+        }
+  
+        avatarUrl = publicUrlData.publicUrl;
+        console.log("Avatar URL:", avatarUrl);
+      }
+  
+      // Update the user's profile with the new avatar URL
       const updatedDayPreferences = noPreference
         ? ["no_preference"]
         : values.dayPreferences;
-
+  
       const { error: profileError } = await supabaseBrowserClient
         .from("profiles")
         .update({
+          avatar_url: avatarUrl,
           user_type: values.userType,
           shift_preference: values.shiftPreference,
           day_preferences: updatedDayPreferences,
         })
         .eq("user_id", userId);
-
+  
       if (profileError) {
+        console.error("Profile update error:", profileError.message);
         throw new Error(profileError.message);
       }
-
-      if (values.password) {
-        const { error: authError } =
-          await supabaseBrowserClient.auth.updateUser({
-            password: values.password,
-          });
-
-        if (authError) {
-          throw new Error(authError.message);
-        }
-      }
-
+  
       message.success("Account settings updated successfully!");
       setLoading(false);
       setOpened(false);
     } catch (error) {
       setLoading(false);
-      console.error("Save failed:", error);
-      message.error("Failed to update account settings.");
+  
+      if (error instanceof Error) {
+        message.error(`Failed to update account settings: ${error.message}`);
+        console.error("Save failed:", error.message);
+      } else {
+        message.error("An unknown error occurred.");
+        console.error("Save failed with unknown error:", error);
+      }
     }
   };
+  
 
   if (isLoading) {
     return (
@@ -342,10 +437,43 @@ export const AccountSettings = ({ opened, setOpened, userId }: Props) => {
                 listType="picture"
                 maxCount={1}
                 showUploadList={false}
-                beforeUpload={() => false}
+                beforeUpload={(file) => {
+                  setSelectedFile(file);
+
+                  // Only generate preview for images
+                  const isImage = file.type.startsWith("image/");
+                  if (isImage) {
+                    const reader = new FileReader();
+                    reader.onload = () =>
+                      setPreviewImage(reader.result as string);
+                    reader.readAsDataURL(file);
+                  } else {
+                    setPreviewImage(null);
+                  }
+
+                  return false; // Prevent automatic upload
+                }}
               >
                 <Button icon={<UploadOutlined />}>Upload Avatar</Button>
               </Upload>
+
+              {/* Show a preview of the file */}
+              {selectedFile && (
+                <div style={{ marginTop: 16 }}>
+                  <strong>Selected file:</strong> {selectedFile.name}
+                </div>
+              )}
+
+              {/* Show an image preview if the file is an image */}
+              {previewImage && (
+                <div style={{ marginTop: 16 }}>
+                  <img
+                    src={previewImage}
+                    alt="Avatar Preview"
+                    style={{ width: 100 }}
+                  />
+                </div>
+              )}
             </Form.Item>
           </Form>
           <Button
