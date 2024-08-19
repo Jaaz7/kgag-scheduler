@@ -7,6 +7,7 @@ import {
   Grid,
   theme,
   ConfigProvider,
+  Modal,
 } from "antd";
 import {
   UserOutlined,
@@ -37,39 +38,34 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
   } = useThemedLayoutContext();
 
   const [currentPath, setCurrentPath] = useState("");
-
-  const updatePath = () => {
-    setCurrentPath(window.location.pathname);
-  };
+  const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
 
   useEffect(() => {
     const updatePath = () => {
-      setCurrentPath(window.location.pathname); // Safe to update state here
+      setCurrentPath(window.location.pathname);
     };
-  
+
     if (typeof window !== "undefined") {
       updatePath();
-  
       window.addEventListener("popstate", updatePath);
-  
+
       const handleHistoryChange = () => {
-        // Use setTimeout to delay the state update until after the history changes are complete
         setTimeout(updatePath, 0);
       };
-  
+
       const originalPushState = window.history.pushState;
       const originalReplaceState = window.history.replaceState;
-  
+
       window.history.pushState = function (...args) {
         originalPushState.apply(window.history, args);
-        handleHistoryChange(); // Delay the state update
+        handleHistoryChange();
       };
-  
+
       window.history.replaceState = function (...args) {
         originalReplaceState.apply(window.history, args);
-        handleHistoryChange(); // Delay the state update
+        handleHistoryChange();
       };
-  
+
       return () => {
         window.removeEventListener("popstate", updatePath);
         window.history.pushState = originalPushState;
@@ -77,7 +73,6 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
       };
     }
   }, []);
-  
 
   const direction = useContext(ConfigProvider.ConfigContext)?.direction;
   const translate = useTranslate();
@@ -87,8 +82,19 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
   const isMobile = !breakpoint.lg;
 
   const RenderToTitle = TitleFromProps ?? ThemedTitleV2;
-  const handleLogout = () => {
-    mutateLogout();
+
+  // Function to show the logout confirmation modal
+  const handleLogoutClick = () => {
+    console.log("Logout clicked! Opening modal..."); // Debugging line
+    setIsLogoutModalVisible(true); // Show the modal
+  };
+
+  // Function to handle the confirmed logout
+  const confirmLogout = () => {
+    console.log("Confirming logout..."); // Debugging line
+  setMobileSiderOpen(false); // Close the drawer first before logging out
+  mutateLogout(); // Trigger the logout action
+  setIsLogoutModalVisible(false); // Close the modal
   };
 
   const handleTitleClick = () => {
@@ -135,7 +141,7 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
       key: "logout",
       icon: <LogoutOutlined />,
       label: translate("buttons.logout", "Logout"),
-      onClick: handleLogout, // Directly attach the logout handler here
+      onClick: handleLogoutClick, // Open modal on click
     },
   ];
 
@@ -144,15 +150,27 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
       <Menu
         selectedKeys={[currentPath]}
         mode="inline"
-        items={items}
+        items={items.map((item) => {
+          if (item.key === "logout") {
+            return {
+              ...item,
+              onClick: () => {
+                handleLogoutClick(); // Show the logout modal
+              },
+            };
+          }
+          return item;
+        })}
         style={{
           paddingTop: "8px",
           border: "none",
           overflow: "auto",
           height: "calc(100% - 72px)",
         }}
-        onClick={() => {
-          setMobileSiderOpen(false);
+        onClick={(e) => {
+          if (e.key !== "logout") {
+            setMobileSiderOpen(false); // Close drawer for non-logout items
+          }
         }}
       />
     );
@@ -167,11 +185,7 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
           placement="left"
           closable={false}
           width={200}
-          styles={{
-            body: {
-              padding: 0,
-            },
-          }}
+          styles={{ body: { padding: 0 } }}
           maskClosable={true}
         >
           <Layout>
@@ -198,7 +212,7 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
                   onTitleClick={handleTitleClick}
                 />
               </div>
-              {renderMenu()}
+              {renderMenu()} {/* Ensure logout button appears in the drawer */}
             </Layout.Sider>
           </Layout>
         </Drawer>
@@ -224,7 +238,8 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
   if (fixed) {
     siderStyles.position = "fixed";
     siderStyles.top = 0;
-    (siderStyles.height = "100vh"), (siderStyles.zIndex = 999);
+    siderStyles.height = "100vh";
+    siderStyles.zIndex = 999;
   }
 
   return (
@@ -281,6 +296,19 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
         </div>
         {renderMenu()}
       </Layout.Sider>
+
+      {/* Logout Confirmation Modal */}
+      <Modal
+        title="Confirm Logout"
+        open={isLogoutModalVisible}
+        onOk={confirmLogout}
+        onCancel={() => setIsLogoutModalVisible(false)}
+        okText="Logout"
+        cancelText="Cancel"
+        zIndex={3000} // Ensure modal appears above Drawer
+      >
+        <p>Are you sure you want to logout?</p>
+      </Modal>
     </>
   );
 };

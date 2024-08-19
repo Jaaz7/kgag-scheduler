@@ -13,7 +13,7 @@ import AuthWrapper from "@/components/layouts/AuthWrapper";
 import { resources } from "@/components/common/resources";
 import { Spin } from "antd";
 
-import "@/styles/globals.css"; 
+import "@/styles/globals.css";
 import "@refinedev/antd/dist/reset.css";
 
 export default function RootLayout({

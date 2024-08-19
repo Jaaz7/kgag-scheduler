@@ -5,288 +5,322 @@ import {
   Drawer,
   Form,
   Input,
-  Spin,
   Upload,
   Select,
   Checkbox,
   message,
+  Spin,
+  Modal,
 } from "antd";
-import { CloseOutlined, UploadOutlined, SaveOutlined } from "@ant-design/icons";
-import { useQuery } from "@tanstack/react-query";
+import {
+  UploadOutlined,
+  SaveOutlined,
+  DeleteOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+} from "@ant-design/icons";
 import { supabaseBrowserClient } from "@lib/supabase/client";
 import { CustomAvatar } from "@components/common/CustomAvatar";
-import { Text } from "@components/common/Text";
 import { getNameInitials } from "@lib/date/get-name-initials";
 import { HttpError } from "@refinedev/core";
+import { useQuery } from "@tanstack/react-query";
+import Resizer from "react-image-file-resizer";
+import { isEqual } from "lodash";
 
 const { Option } = Select;
 
-interface UserData {
-  avatarUrl: string;
-  name: string;
-  email: string;
-  user_type: string;
-  shift_preference: string;
-  day_preferences: string[];
-}
-
-type Props = {
+interface Props {
   opened: boolean;
   setOpened: (opened: boolean) => void;
   userId: string;
-};
+  onAvatarUpdate: (avatarUrl: string | null) => void;
+}
 
-export const AccountSettings = ({ opened, setOpened, userId }: Props) => {
+export const AccountSettings = ({
+  opened,
+  setOpened,
+  userId,
+  onAvatarUpdate,
+}: Props) => {
   const [form] = Form.useForm();
+  const [initialValues, setInitialValues] = useState<any>(null);
   const [initials, setInitials] = useState("");
   const [loading, setLoading] = useState(false);
-  const [isPasswordValid, setIsPasswordValid] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [noPreference, setNoPreference] = useState(false);
+  const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
+  const [passwordValid, setPasswordValid] = useState(false);
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordsMatch, setPasswordsMatch] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
-  const { data, isLoading } = useQuery<UserData, HttpError>(
+  const { data, isLoading, refetch } = useQuery<any, HttpError>(
     ["user", userId],
     async () => {
-      const { data, error } = await supabaseBrowserClient
-        .from("profiles")
-        .select("*")
-        .eq("user_id", userId)
-        .single();
+      const { data: profileData, error: profileError } =
+        await supabaseBrowserClient
+          .from("profiles")
+          .select("*")
+          .eq("user_id", userId)
+          .single();
 
-      if (error) {
-        throw new Error(error.message);
-      }
+      if (profileError) throw new Error(profileError.message);
 
-      return data;
+      const { data: userData, error: userError } =
+        await supabaseBrowserClient.auth.getUser();
+
+      if (userError) throw new Error(userError.message);
+
+      return { ...profileData, email: userData.user?.email || "" };
+    },
+    {
+      enabled: opened,
+      onSuccess: async (data) => {
+        if (data.avatar_url) {
+          const signedUrl = await fetchSignedAvatarUrl(data.avatar_url);
+          setAvatarUrl(signedUrl);
+        }
+
+        const initialData = {
+          ...data,
+          userType: data.user_type,
+          email: data.email,
+          shiftPreference: data.shift_preference || "",
+          dayPreferences: data.day_preferences || [],
+          work_days_per_week: data.work_days_per_week || "1",
+        };
+
+        if (initialData.dayPreferences.includes("no_preference")) {
+          setNoPreference(true);
+          initialData.dayPreferences = [];
+        } else {
+          setNoPreference(false);
+        }
+
+        form.setFieldsValue(initialData);
+        setInitialValues(initialData);
+        setInitials(getNameInitials(data.name || ""));
+        setSelectedFile(null);
+        setPreviewImage(null);
+      },
     }
   );
 
-  const fetchUserEmailAndProfile = async () => {
-    try {
-      const { data: authData, error: authError } =
-        await supabaseBrowserClient.auth.getUser();
-      if (authError) {
-        throw new Error(authError.message);
-      }
-      const userEmail = authData.user?.email || "";
-
-      const { data: userData, error: userError } = await supabaseBrowserClient
-        .from("profiles")
-        .select("*")
-        .eq("user_id", userId)
-        .single();
-
-      if (userError) {
-        throw new Error(userError.message);
-      }
-
-      if (userData) {
-        const userName = userData.name || "";
-        const userType = userData.user_type || "";
-        const shiftPreference = userData.shift_preference || "no_preference";
-        const dayPreferences = userData.day_preferences.length
-          ? userData.day_preferences
-          : ["no_preference"];
-
-        form.setFieldsValue({
-          name: userName,
-          email: userEmail,
-          userType: userType,
-          avatarUrl: userData.avatarUrl,
-          shiftPreference: shiftPreference,
-          dayPreferences: dayPreferences.includes("no_preference")
-            ? []
-            : dayPreferences,
-        });
-
-        setNoPreference(dayPreferences.includes("no_preference"));
-
-        const generatedInitials = getNameInitials(userName);
-        setInitials(generatedInitials);
-      } else {
-        form.setFieldsValue({
-          email: userEmail,
-        });
-      }
-    } catch (error) {
-      console.error(
-        "Error fetching user data:",
-        error instanceof Error ? error.message : String(error)
-      );
-    }
-  };
-
   useEffect(() => {
     if (opened) {
-      fetchUserEmailAndProfile();
+      form.resetFields();
+      setPassword("");
+      setConfirmPassword("");
+      setPasswordErrors([]);
+      setPasswordValid(false);
+      setPasswordsMatch(false);
     }
-  }, [opened]);
+  }, [opened, form]);
 
-  useEffect(() => {
-    const fetchUserEmailAndProfile = async () => {
-      try {
-        const { data: authData, error: authError } =
-          await supabaseBrowserClient.auth.getUser();
-        if (authError) {
-          throw new Error(authError.message);
-        }
-        const userEmail = authData.user?.email || "";
+  const resizeImage = (file: File): Promise<Blob> => {
+    return new Promise((resolve) => {
+      Resizer.imageFileResizer(
+        file,
+        256,
+        256,
+        "PNG",
+        80,
+        0,
+        (uri) => resolve(uri as Blob),
+        "blob"
+      );
+    });
+  };
 
-        if (data) {
-          const userName = data.name || "";
-          const userType = data.user_type || "";
-          const shiftPreference = data.shift_preference || "no_preference";
-          const dayPreferences = data.day_preferences.length
-            ? data.day_preferences
-            : ["no_preference"];
+  const handleCancel = () => {
+    setIsModalVisible(false);
+  };
 
-          form.setFieldsValue({
-            name: userName,
-            email: userEmail || data.email,
-            userType: userType,
-            avatarUrl: data.avatarUrl,
-            shiftPreference: shiftPreference,
-            dayPreferences: dayPreferences.includes("no_preference")
-              ? []
-              : dayPreferences,
-          });
+  const fetchSignedAvatarUrl = async (filePath: string) => {
+    const { data, error } = await supabaseBrowserClient.storage
+      .from("avatars")
+      .createSignedUrl(filePath, 60);
 
-          setNoPreference(dayPreferences.includes("no_preference"));
-
-          const generatedInitials = getNameInitials(userName);
-          setInitials(generatedInitials);
-        } else {
-          form.setFieldsValue({
-            email: userEmail,
-          });
-
-          const generatedInitials = getNameInitials("");
-          setInitials(generatedInitials);
-        }
-      } catch (error) {
-        console.error(
-          "Error fetching user data:",
-          error instanceof Error ? error.message : String(error)
-        );
-      }
-    };
-
-    fetchUserEmailAndProfile();
-  }, [data, form]);
-
-  const validatePassword = (_: any, value: string) => {
-    if (!value) {
-      setIsPasswordValid(false);
-      return Promise.resolve();
+    if (error) {
+      console.error("Error fetching signed URL:", error.message);
+      return null;
     }
+
+    return data.signedUrl;
+  };
+
+  const validatePassword = (password: string) => {
+    const hasMinLength = /.{8,}/.test(password);
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasNumber = /\d/.test(password);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
     const errors = [];
-    if (value.length < 8) {
-      errors.push("Password must be at least 8 characters long.");
-    }
-    if (!/[A-Z]/.test(value)) {
-      errors.push("Password must contain at least one uppercase letter.");
-    }
-    if (!/[a-z]/.test(value)) {
-      errors.push("Password must contain at least one lowercase letter.");
-    }
-    if (!/[0-9]/.test(value)) {
-      errors.push("Password must contain at least one digit.");
-    }
-    if (!/[\W_]/.test(value)) {
-      errors.push("Password must contain at least one special character.");
-    }
-    if (errors.length > 0) {
-      setIsPasswordValid(false);
-      return Promise.reject(new Error(errors.join(" ")));
-    }
-    setIsPasswordValid(true);
-    return Promise.resolve();
+    if (!hasMinLength) errors.push("At least 8 characters");
+    if (!hasUppercase) errors.push("At least one uppercase letter");
+    if (!hasNumber) errors.push("At least one number");
+    if (!hasSpecialChar) errors.push("At least one special character");
+
+    setPasswordErrors(errors);
+    setPasswordValid(errors.length === 0);
+
+    return errors.length === 0;
   };
 
-  const closeModal = () => {
-    setOpened(false);
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newPassword = e.target.value;
+    setPassword(newPassword);
+
+    if (!newPassword) {
+      setPasswordErrors([]);
+      setPasswordValid(false);
+      setPasswordsMatch(false);
+      return;
+    }
+
+    const isValid = validatePassword(newPassword);
+    setPasswordsMatch(newPassword === confirmPassword);
   };
 
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const handleConfirmPasswordChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const newConfirmPassword = e.target.value;
+    setConfirmPassword(newConfirmPassword);
+    setPasswordsMatch(password === newConfirmPassword);
+  };
 
   const handleSave = async () => {
+    let passwordUpdated = false;
+    let settingsUpdated = false;
+
     try {
       setLoading(true);
-      await form.validateFields();
-      const values = form.getFieldsValue();
-  
-      // Ensure the session is valid
-      const { data: sessionData } = await supabaseBrowserClient.auth.getSession();
-      if (!sessionData || !sessionData.session) {
-        throw new Error("User is not authenticated.");
-      }
-  
-      let avatarUrl = data?.avatarUrl || ""; // Default to existing avatar URL
-      const file = selectedFile;
-  
-      // Handle file upload
-      if (file) {
-        const filePath = `${userId}/${file.name}`;
-        console.log("Uploading file to:", filePath);
-  
-        const { error: uploadError, data: uploadData } = await supabaseBrowserClient.storage
-          .from("avatars")
-          .upload(filePath, file);
-  
-        if (uploadError) {
-          console.error("File upload error:", uploadError.message);
-          throw new Error(uploadError.message);
+
+      if (password || confirmPassword) {
+        if (!validatePassword(password) || password !== confirmPassword) {
+          message.error(
+            password !== confirmPassword
+              ? "Passwords do not match."
+              : "Password does not meet the minimum requirements."
+          );
+          setLoading(false);
+          return;
         }
-  
-        // Generate public URL for the uploaded avatar
-        const { data: publicUrlData } = supabaseBrowserClient.storage
-          .from("avatars")
-          .getPublicUrl(filePath);
-  
-        if (!publicUrlData || !publicUrlData.publicUrl) {
-          throw new Error("Failed to generate public URL for avatar.");
+
+        try {
+          await supabaseBrowserClient
+            .from("profiles")
+            .update({ password })
+            .eq("user_id", userId);
+          passwordUpdated = true;
+        } catch {
+          message.error("Failed to update password.");
+          setLoading(false);
+          return;
         }
-  
-        avatarUrl = publicUrlData.publicUrl;
-        console.log("Avatar URL:", avatarUrl);
       }
-  
-      // Update the user's profile with the new avatar URL
-      const updatedDayPreferences = noPreference
+
+      let avatarPath = data?.avatar_url || "";
+      if (selectedFile) {
+        try {
+          const filePath = `avatars/${userId}/avatar-${Date.now()}.png`;
+
+          if (avatarPath) {
+            await supabaseBrowserClient.storage
+              .from("avatars")
+              .remove([avatarPath]);
+          }
+
+          const resizedFile = await resizeImage(selectedFile);
+          await supabaseBrowserClient.storage
+            .from("avatars")
+            .upload(filePath, resizedFile);
+
+          avatarPath = filePath;
+          const signedUrl = await fetchSignedAvatarUrl(avatarPath);
+          if (signedUrl) {
+            setAvatarUrl(signedUrl);
+            onAvatarUpdate(signedUrl);
+          }
+        } catch {
+          message.error("Failed to update avatar.");
+          setLoading(false);
+          return;
+        }
+      }
+
+      const shiftPreference = form.getFieldValue("shiftPreference");
+      const dayPreferences = noPreference
         ? ["no_preference"]
-        : values.dayPreferences;
-  
-      const { error: profileError } = await supabaseBrowserClient
-        .from("profiles")
-        .update({
-          avatar_url: avatarUrl,
-          user_type: values.userType,
-          shift_preference: values.shiftPreference,
-          day_preferences: updatedDayPreferences,
-        })
-        .eq("user_id", userId);
-  
-      if (profileError) {
-        console.error("Profile update error:", profileError.message);
-        throw new Error(profileError.message);
+        : form.getFieldValue("dayPreferences");
+      const workDaysPerWeek = form.getFieldValue("work_days_per_week");
+
+      if (
+        avatarPath !== data?.avatar_url ||
+        shiftPreference !== initialValues.shift_preference ||
+        !isEqual(dayPreferences, initialValues.day_preferences) ||
+        workDaysPerWeek !== initialValues.work_days_per_week
+      ) {
+        try {
+          await supabaseBrowserClient
+            .from("profiles")
+            .update({
+              avatar_url: avatarPath,
+              shift_preference: shiftPreference,
+              day_preferences: dayPreferences,
+              work_days_per_week: workDaysPerWeek,
+            })
+            .eq("user_id", userId);
+          settingsUpdated = true;
+        } catch {
+          message.error("Failed to update profile.");
+          setLoading(false);
+          return;
+        }
       }
-  
-      message.success("Account settings updated successfully!");
-      setLoading(false);
+
+      message.success(
+        passwordUpdated && settingsUpdated
+          ? "Password and settings saved successfully."
+          : passwordUpdated
+          ? "Password updated successfully."
+          : "Settings saved successfully."
+      );
+
       setOpened(false);
-    } catch (error) {
+    } catch {
+      message.error("An unexpected error occurred.");
+    } finally {
       setLoading(false);
-  
-      if (error instanceof Error) {
-        message.error(`Failed to update account settings: ${error.message}`);
-        console.error("Save failed:", error.message);
-      } else {
-        message.error("An unknown error occurred.");
-        console.error("Save failed with unknown error:", error);
-      }
     }
   };
-  
+
+  const handleDeleteAvatar = async () => {
+    try {
+      if (data?.avatar_url) {
+        await supabaseBrowserClient.storage
+          .from("avatars")
+          .remove([data.avatar_url]);
+
+        await supabaseBrowserClient
+          .from("profiles")
+          .update({ avatar_url: null })
+          .eq("user_id", userId);
+
+        setAvatarUrl(null);
+        onAvatarUpdate(null);
+        message.success("Avatar deleted successfully!");
+        setIsModalVisible(false);
+        setOpened(false);
+      }
+    } catch {
+      message.error("Failed to delete avatar.");
+    }
+  };
 
   if (isLoading) {
     return (
@@ -305,194 +339,228 @@ export const AccountSettings = ({ opened, setOpened, userId }: Props) => {
   }
 
   return (
-    <Drawer
-      onClose={closeModal}
-      open={opened}
-      width={756}
-      styles={{
-        body: {
-          background: "#f5f5f5",
-          padding: 0,
-        },
-        header: {
-          display: "none",
-        },
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          padding: "16px",
-          backgroundColor: "#fff",
-        }}
-      >
-        <Text strong>Account Settings</Text>
-        <Button type="text" icon={<CloseOutlined />} onClick={closeModal} />
-      </div>
-      <div style={{ padding: "16px" }}>
-        <Card>
-          <Form form={form} layout="vertical">
-            <CustomAvatar
-              shape="square"
-              src={data?.avatarUrl}
-              initials={initials}
-              style={{
-                width: 96,
-                height: 96,
-                marginBottom: "24px",
-              }}
-            />
-
-            <Form.Item label="Name" name="name">
-              <Input
-                placeholder=""
-                disabled
-                style={{ backgroundColor: "#f0f0f0" }}
+    <>
+      <Drawer onClose={() => setOpened(false)} open={opened} width={756}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "16px",
+            backgroundColor: "#fff",
+          }}
+        >
+          <strong>Account Settings</strong>
+        </div>
+        <div style={{ padding: "16px" }}>
+          <Card>
+            <Form form={form} layout="vertical">
+              <CustomAvatar
+                shape="square"
+                src={avatarUrl}
+                initials={initials}
+                style={{ width: 96, height: 96, marginBottom: "20px" }}
               />
-            </Form.Item>
-            <Form.Item label="User Type" name="userType">
-              <Input
-                placeholder=""
-                disabled
-                style={{ backgroundColor: "#f0f0f0" }}
-              />
-            </Form.Item>
+              <Form.Item label="Name" name="name">
+                <Input disabled style={{ backgroundColor: "#f0f0f0" }} />
+              </Form.Item>
+              <Form.Item label="User Type" name="userType">
+                <Input disabled style={{ backgroundColor: "#f0f0f0" }} />
+              </Form.Item>
+              <Form.Item label="Email" name="email">
+                <Input disabled style={{ backgroundColor: "#f0f0f0" }} />
+              </Form.Item>
 
-            <Form.Item label="Email" name="email">
-              <Input
-                placeholder=""
-                disabled
-                style={{ backgroundColor: "#f0f0f0" }}
-              />
-            </Form.Item>
-
-            <Form.Item label="Shift Preference" name="shiftPreference">
-              <Select
-                placeholder="No Preference"
-                allowClear
-                onChange={(value) => {
-                  form.setFieldValue(
-                    "shiftPreference",
-                    value === "no_preference" ? "no_preference" : value
-                  );
-                }}
+              <Form.Item
+                label="Working Days Per Week"
+                name="work_days_per_week"
               >
-                <Option value="no_preference">No Preference</Option>
-                <Option value="Frühschicht">Frühschicht</Option>
-                <Option value="Mittelschicht">Mittelschicht</Option>
-                <Option value="Spätschicht">Spätschicht</Option>
-              </Select>
-            </Form.Item>
+                <Select placeholder="Select number of days">
+                  <Option value="1">1 Day</Option>
+                  <Option value="2">2 Days</Option>
+                  <Option value="3">3 Days</Option>
+                  <Option value="4">4 Days</Option>
+                  <Option value="5">5 Days</Option>
+                </Select>
+              </Form.Item>
 
-            <Form.Item label="Day Preferences">
-              <div style={{ display: "flex", alignItems: "center" }}>
-                <Checkbox
-                  checked={noPreference}
-                  onChange={(e) => {
-                    setNoPreference(e.target.checked);
-                    if (e.target.checked) {
-                      form.setFieldValue("dayPreferences", []);
-                    }
-                  }}
-                  style={{ marginRight: 8 }}
-                >
-                  No Preference
-                </Checkbox>
-                <Form.Item
-                  name="dayPreferences"
-                  style={{ flex: 1, marginBottom: 0 }}
-                >
-                  <Select
-                    mode="multiple"
-                    placeholder="Select your day preferences"
-                    allowClear
-                    disabled={noPreference}
+              <Form.Item label="Shift Preference" name="shiftPreference">
+                <Select placeholder="No Preference" allowClear>
+                  <Option value="no_preference">No Preference</Option>
+                  <Option value="Frühschicht">Frühschicht</Option>
+                  <Option value="Mittelschicht">Mittelschicht</Option>
+                  <Option value="Spätschicht">Spätschicht</Option>
+                </Select>
+              </Form.Item>
+
+              <Form.Item label="Day Preferences">
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  <Checkbox
+                    checked={noPreference}
+                    onChange={(e) => {
+                      setNoPreference(e.target.checked);
+                      form.setFieldsValue({ dayPreferences: [] });
+                    }}
+                    style={{ marginRight: 8 }}
                   >
-                    <Option value="Montag">Montag</Option>
-                    <Option value="Dienstag">Dienstag</Option>
-                    <Option value="Mittwoch">Mittwoch</Option>
-                    <Option value="Donnerstag">Donnerstag</Option>
-                    <Option value="Freitag">Freitag</Option>
-                    <Option value="Samstag">Samstag</Option>
-                    <Option value="Sonntag">Sonntag</Option>
-                  </Select>
-                </Form.Item>
-              </div>
-            </Form.Item>
+                    No Preference
+                  </Checkbox>
+                  <Form.Item
+                    name="dayPreferences"
+                    style={{ flex: 1, marginBottom: 0 }}
+                  >
+                    <Select
+                      mode="multiple"
+                      placeholder="Select your day preferences"
+                      allowClear
+                      disabled={noPreference}
+                    >
+                      <Option value="Montag">Montag</Option>
+                      <Option value="Dienstag">Dienstag</Option>
+                      <Option value="Mittwoch">Mittwoch</Option>
+                      <Option value="Donnerstag">Donnerstag</Option>
+                      <Option value="Freitag">Freitag</Option>
+                      <Option value="Samstag">Samstag</Option>
+                    </Select>
+                  </Form.Item>
+                </div>
+              </Form.Item>
 
-            <Form.Item
-              label="Password"
-              name="password"
-              rules={[{ validator: validatePassword }]}
-              hasFeedback={!!form.getFieldValue("password") && isPasswordValid}
+              <Form.Item label="Password">
+                <Input.Password
+                  value={password}
+                  onChange={handlePasswordChange}
+                  placeholder="Enter new password"
+                />
+                {passwordErrors.length > 0 && (
+                  <ul
+                    style={{ color: "red", paddingLeft: "20px", marginTop: 8 }}
+                  >
+                    {passwordErrors.map((error, index) => (
+                      <li key={index}>
+                        <CloseCircleOutlined /> {error}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {password && passwordValid && (
+                  <div style={{ color: "green", marginTop: 8 }}>
+                    <CheckCircleOutlined /> Your password meets all
+                    requirements.
+                  </div>
+                )}
+              </Form.Item>
+
+              <Form.Item label="Confirm Password">
+                <Input.Password
+                  value={confirmPassword}
+                  onChange={handleConfirmPasswordChange}
+                  placeholder="Confirm new password"
+                />
+                {confirmPassword && !passwordsMatch && (
+                  <div style={{ color: "red", marginTop: 8 }}>
+                    <CloseCircleOutlined /> Passwords do not match.
+                  </div>
+                )}
+                {confirmPassword && passwordsMatch && (
+                  <div style={{ color: "green", marginTop: 8 }}>
+                    <CheckCircleOutlined /> Passwords match!
+                  </div>
+                )}
+              </Form.Item>
+
+              <Form.Item label="Upload Avatar" name="avatarUrl">
+                <Upload
+                  name="avatar"
+                  listType="picture"
+                  maxCount={1}
+                  showUploadList={false}
+                  beforeUpload={(file) => {
+                    setSelectedFile(file);
+                    if (file.type.startsWith("image/")) {
+                      const reader = new FileReader();
+                      reader.onload = () =>
+                        setPreviewImage(reader.result as string);
+                      reader.readAsDataURL(file);
+                    } else {
+                      setPreviewImage(null);
+                    }
+                    return false;
+                  }}
+                >
+                  <Button icon={<UploadOutlined />}>Upload Avatar</Button>
+                </Upload>
+
+                {previewImage && (
+                  <div style={{ marginTop: 16 }}>
+                    <img
+                      src={previewImage}
+                      alt="Avatar Preview"
+                      style={{ width: 100 }}
+                    />
+                  </div>
+                )}
+
+                {selectedFile && (
+                  <div style={{ marginTop: 8 }}>
+                    <Button
+                      type="text"
+                      icon={<DeleteOutlined />}
+                      onClick={() => {
+                        setSelectedFile(null);
+                        setPreviewImage(null);
+                      }}
+                      danger
+                    >
+                      Clear Selected Image
+                    </Button>
+                  </div>
+                )}
+              </Form.Item>
+
+              {avatarUrl && (
+                <Button
+                  type="default"
+                  icon={<DeleteOutlined />}
+                  danger
+                  onClick={() => setIsModalVisible(true)}
+                >
+                  Delete Current Avatar
+                </Button>
+              )}
+            </Form>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                marginTop: 24,
+              }}
             >
-              <Input.Password placeholder="Enter new password" />
-            </Form.Item>
-
-            <Form.Item label="Upload Avatar" name="avatarUrl">
-              <Upload
-                name="avatar"
-                listType="picture"
-                maxCount={1}
-                showUploadList={false}
-                beforeUpload={(file) => {
-                  setSelectedFile(file);
-
-                  // Only generate preview for images
-                  const isImage = file.type.startsWith("image/");
-                  if (isImage) {
-                    const reader = new FileReader();
-                    reader.onload = () =>
-                      setPreviewImage(reader.result as string);
-                    reader.readAsDataURL(file);
-                  } else {
-                    setPreviewImage(null);
-                  }
-
-                  return false; // Prevent automatic upload
-                }}
+              <Button
+                type="primary"
+                onClick={handleSave}
+                loading={loading}
+                style={{ display: "flex", alignItems: "center", gap: "5px" }}
               >
-                <Button icon={<UploadOutlined />}>Upload Avatar</Button>
-              </Upload>
-
-              {/* Show a preview of the file */}
-              {selectedFile && (
-                <div style={{ marginTop: 16 }}>
-                  <strong>Selected file:</strong> {selectedFile.name}
-                </div>
-              )}
-
-              {/* Show an image preview if the file is an image */}
-              {previewImage && (
-                <div style={{ marginTop: 16 }}>
-                  <img
-                    src={previewImage}
-                    alt="Avatar Preview"
-                    style={{ width: 100 }}
-                  />
-                </div>
-              )}
-            </Form.Item>
-          </Form>
-          <Button
-            type="primary"
-            onClick={handleSave}
-            loading={loading}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "5px",
-              marginLeft: "auto",
-            }}
-          >
-            <SaveOutlined style={{ fontSize: "16px" }} />
-            <span>Save</span>
-          </Button>
-        </Card>
-      </div>
-    </Drawer>
+                <SaveOutlined style={{ fontSize: "16px" }} />
+                <span>Save</span>
+              </Button>
+            </div>
+          </Card>
+        </div>
+      </Drawer>
+      <Modal
+        title="Confirm Avatar Deletion"
+        open={isModalVisible} // Still controlled by state
+        onOk={async () => {
+          await handleDeleteAvatar(); // Handle confirm action
+        }}
+        onCancel={handleCancel} // Handle cancel action
+        okText="Delete"
+        cancelText="Cancel"
+      >
+        <p>Are you sure you want to delete your avatar?</p>
+      </Modal>
+    </>
   );
 };
