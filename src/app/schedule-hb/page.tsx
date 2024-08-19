@@ -20,7 +20,7 @@ export default function ScheduleHBPage() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setShouldRender(true);
-    }, 400);
+    }, 0);
 
     return () => clearTimeout(timer);
   }, []);

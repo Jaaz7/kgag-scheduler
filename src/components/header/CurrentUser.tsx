@@ -59,7 +59,7 @@ const CurrentUser = () => {
   };
 
   useEffect(() => {
-    fetchUser(); // Fetch user on component mount
+    fetchUser();
 
     // Subscribe to real-time profile updates
     const channel = supabaseBrowserClient
@@ -90,7 +90,7 @@ const CurrentUser = () => {
                 setAvatarUrl(signedUrlData?.signedUrl || null);
               }
             } else {
-              setAvatarUrl(null); // Avatar was removed
+              setAvatarUrl(null);
             }
           }
         }
@@ -98,7 +98,7 @@ const CurrentUser = () => {
       .subscribe();
 
     return () => {
-      supabaseBrowserClient.removeChannel(channel); // Cleanup on unmount
+      supabaseBrowserClient.removeChannel(channel);
     };
   }, [avatarUrl, user?.user_id]);
 

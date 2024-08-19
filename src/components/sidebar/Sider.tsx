@@ -170,7 +170,7 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
           color: token.colorTextSecondary,
         }}
       >
-        <GlobalOutlined style={{ fontSize: "17px" }} />
+        <GlobalOutlined style={{ fontSize: "15px" }} />
       </a>
       <span>Developed by Jaaziel do Vale</span>
     </div>

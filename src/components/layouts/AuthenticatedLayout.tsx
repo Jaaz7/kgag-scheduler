@@ -4,7 +4,6 @@ import { ThemedLayoutV2, ThemedTitleV2 } from "@components/sidebar";
 import { Header } from "@components/header/Header";
 import NotFound from "@/app/not-found";
 import "@/styles/globals.css";
-import { Spin } from "antd";
 
 interface AuthenticatedLayoutProps {
   children: React.ReactNode;
@@ -17,7 +16,8 @@ export default function AuthenticatedLayout({
   const [isValidPath, setIsValidPath] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const validPaths = ["/", "/schedule-hb", "/manage-users"];3
+    const validPaths = ["/", "/schedule-hb", "/manage-users"];
+    3;
 
     if (validPaths.includes(pathname)) {
       setIsValidPath(true);
@@ -37,7 +37,7 @@ export default function AuthenticatedLayout({
         <ThemedTitleV2 {...titleProps} text="HB Shop" link="/schedule-hb" />
       )}
     >
-      <Suspense fallback={<Spin size="large" />}>{children}</Suspense>
+      <Suspense>{children}</Suspense>
     </ThemedLayoutV2>
   );
 }

@@ -1,9 +1,6 @@
 // resources.ts
 import { IResourceItem } from "@refinedev/core";
-import {
-  CalendarOutlined,
-  UserOutlined,
-} from "@ant-design/icons";
+import { CalendarOutlined, UserOutlined } from "@ant-design/icons";
 
 export const resources: IResourceItem[] = [
   {

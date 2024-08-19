@@ -1,9 +1,8 @@
-"use client"
+"use client";
 
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import { Modal } from "antd";
 
-// Define a type for the context
 interface ModalConfig {
   title: string;
   content: ReactNode;
@@ -29,13 +28,13 @@ export const ModalProvider: React.FC<{ children: ReactNode }> = ({
   const [modalConfig, setModalConfig] = useState<ModalConfig | null>(null);
 
   const showModal = (config: ModalConfig) => {
-    setModalConfig(config); // Set the modal configuration
+    setModalConfig(config);
     setIsModalVisible(true);
   };
 
   const hideModal = () => {
     setIsModalVisible(false);
-    setModalConfig(null); // Reset the modal config
+    setModalConfig(null);
   };
 
   return (
@@ -46,8 +45,8 @@ export const ModalProvider: React.FC<{ children: ReactNode }> = ({
           title={modalConfig.title}
           open={isModalVisible}
           onOk={() => {
-            if (modalConfig.onOk) modalConfig.onOk(); // Ensure onOk exists before calling
-            hideModal(); // Hide modal after onOk is executed
+            if (modalConfig.onOk) modalConfig.onOk();
+            hideModal();
           }}
           onCancel={hideModal}
           okText={modalConfig.okText || "OK"}

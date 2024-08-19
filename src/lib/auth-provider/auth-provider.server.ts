@@ -130,14 +130,3 @@ export const authProviderServer: AuthProvider = {
     return { error };
   },
 };
-
-export const checkAuthSSR = async (context: GetServerSidePropsContext) => {
-  const supabase = createSupabaseServerClient(context);
-  const { data, error } = await supabase.auth.getUser();
-
-  if (error || !data?.user) {
-    return false;
-  }
-
-  return true;
-};

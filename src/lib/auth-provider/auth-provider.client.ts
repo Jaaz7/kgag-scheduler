@@ -6,10 +6,11 @@ import { supabaseBrowserClient } from "@/lib/supabase/client";
 export const authProviderClient: AuthProvider = {
   login: async ({ email, password }): Promise<AuthActionResponse> => {
     try {
-      const { data, error } = await supabaseBrowserClient.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { data, error } =
+        await supabaseBrowserClient.auth.signInWithPassword({
+          email,
+          password,
+        });
 
       if (error) {
         console.error("Login error:", error);
@@ -35,7 +36,8 @@ export const authProviderClient: AuthProvider = {
 
       return {
         success: false,
-        error: err instanceof Error ? err : new Error("An unknown error occurred"),
+        error:
+          err instanceof Error ? err : new Error("An unknown error occurred"),
       };
     }
   },
@@ -87,7 +89,8 @@ export const authProviderClient: AuthProvider = {
       console.error("Unexpected error during registration:", err);
       return {
         success: false,
-        error: err instanceof Error ? err : new Error("An unknown error occurred"),
+        error:
+          err instanceof Error ? err : new Error("An unknown error occurred"),
       };
     }
   },

@@ -14,7 +14,7 @@ export const ThemedLayoutContextProvider: React.FC<{
   initialSiderCollapsed?: boolean;
 }> = ({ children, initialSiderCollapsed }) => {
   const [siderCollapsed, setSiderCollapsed] = useState(
-    initialSiderCollapsed ?? false,
+    initialSiderCollapsed ?? true
   );
   const [mobileSiderOpen, setMobileSiderOpen] = useState(false);
 

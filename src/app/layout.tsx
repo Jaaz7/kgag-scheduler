@@ -29,7 +29,20 @@ export default function RootLayout({
             <ColorModeContextProvider>
               <DevtoolsProvider>
                 <ModalProvider>
-                  <Suspense fallback={<Spin size="large" />}>
+                  <Suspense
+                    fallback={
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "center",
+                          alignItems: "center",
+                          height: "100vh",
+                        }}
+                      >
+                        <Spin size="large" />
+                      </div>
+                    }
+                  >
                     <Refine
                       routerProvider={routerProvider}
                       authProvider={authProviderClient}
