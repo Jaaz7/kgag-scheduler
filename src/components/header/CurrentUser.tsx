@@ -5,7 +5,7 @@ import { supabaseBrowserClient } from "@/lib/supabase/client";
 import { SettingOutlined } from "@ant-design/icons";
 import { AccountSettings } from "@/components/header/AccountSettings";
 import { Text } from "@components/common/Text";
-import { getNameInitials } from "@lib/date/get-name-initials";
+import { getNameInitials } from "@components/common/get-name-initials";
 
 const CurrentUser = () => {
   const [isOpen, setIsOpen] = useState(false);

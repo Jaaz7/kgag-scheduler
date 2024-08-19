@@ -10,7 +10,6 @@ import {
   Checkbox,
   message,
   Spin,
-  Modal,
 } from "antd";
 import {
   UploadOutlined,
@@ -21,11 +20,12 @@ import {
 } from "@ant-design/icons";
 import { supabaseBrowserClient } from "@lib/supabase/client";
 import { CustomAvatar } from "@components/common/CustomAvatar";
-import { getNameInitials } from "@lib/date/get-name-initials";
+import { getNameInitials } from "@components/common/get-name-initials";
 import { HttpError } from "@refinedev/core";
 import { useQuery } from "@tanstack/react-query";
 import Resizer from "react-image-file-resizer";
 import { isEqual } from "lodash";
+import { useModal } from "@/contexts/ModalProvider";
 
 const { Option } = Select;
 
@@ -55,8 +55,9 @@ export const AccountSettings = ({
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordsMatch, setPasswordsMatch] = useState(false);
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  const { showModal } = useModal();
 
+  // Fetch user data when drawer is opened
   const { data, isLoading, refetch } = useQuery<any, HttpError>(
     ["user", userId],
     async () => {
@@ -109,6 +110,7 @@ export const AccountSettings = ({
     }
   );
 
+  // Reset form and password fields when drawer is opened
   useEffect(() => {
     if (opened) {
       form.resetFields();
@@ -120,6 +122,7 @@ export const AccountSettings = ({
     }
   }, [opened, form]);
 
+  // Resize image to a smaller size for avatar upload
   const resizeImage = (file: File): Promise<Blob> => {
     return new Promise((resolve) => {
       Resizer.imageFileResizer(
@@ -135,10 +138,7 @@ export const AccountSettings = ({
     });
   };
 
-  const handleCancel = () => {
-    setIsModalVisible(false);
-  };
-
+  // Fetch signed URL for the avatar
   const fetchSignedAvatarUrl = async (filePath: string) => {
     const { data, error } = await supabaseBrowserClient.storage
       .from("avatars")
@@ -152,6 +152,7 @@ export const AccountSettings = ({
     return data.signedUrl;
   };
 
+  // Validate password according to specified requirements
   const validatePassword = (password: string) => {
     const hasMinLength = /.{8,}/.test(password);
     const hasUppercase = /[A-Z]/.test(password);
@@ -170,6 +171,7 @@ export const AccountSettings = ({
     return errors.length === 0;
   };
 
+  // Handle changes in the password field
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newPassword = e.target.value;
     setPassword(newPassword);
@@ -185,6 +187,7 @@ export const AccountSettings = ({
     setPasswordsMatch(newPassword === confirmPassword);
   };
 
+  // Handle changes in the confirm password field
   const handleConfirmPasswordChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -193,6 +196,7 @@ export const AccountSettings = ({
     setPasswordsMatch(password === newConfirmPassword);
   };
 
+  // Save the settings including password and avatar
   const handleSave = async () => {
     let passwordUpdated = false;
     let settingsUpdated = false;
@@ -299,6 +303,7 @@ export const AccountSettings = ({
     }
   };
 
+  // Handle avatar deletion confirmation
   const handleDeleteAvatar = async () => {
     try {
       if (data?.avatar_url) {
@@ -314,12 +319,22 @@ export const AccountSettings = ({
         setAvatarUrl(null);
         onAvatarUpdate(null);
         message.success("Avatar deleted successfully!");
-        setIsModalVisible(false);
         setOpened(false);
       }
     } catch {
       message.error("Failed to delete avatar.");
     }
+  };
+
+  // Show modal to confirm avatar deletion
+  const handleShowDeleteAvatarModal = () => {
+    showModal({
+      title: "Confirm Avatar Deletion",
+      content: <p>Are you sure you want to delete your avatar?</p>,
+      onOk: handleDeleteAvatar,
+      okText: "Delete",
+      cancelText: "Cancel",
+    });
   };
 
   if (isLoading) {
@@ -523,7 +538,7 @@ export const AccountSettings = ({
                   type="default"
                   icon={<DeleteOutlined />}
                   danger
-                  onClick={() => setIsModalVisible(true)}
+                  onClick={handleShowDeleteAvatarModal}
                 >
                   Delete Current Avatar
                 </Button>
@@ -549,18 +564,6 @@ export const AccountSettings = ({
           </Card>
         </div>
       </Drawer>
-      <Modal
-        title="Confirm Avatar Deletion"
-        open={isModalVisible} // Still controlled by state
-        onOk={async () => {
-          await handleDeleteAvatar(); // Handle confirm action
-        }}
-        onCancel={handleCancel} // Handle cancel action
-        okText="Delete"
-        cancelText="Cancel"
-      >
-        <p>Are you sure you want to delete your avatar?</p>
-      </Modal>
     </>
   );
 };

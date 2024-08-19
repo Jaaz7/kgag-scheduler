@@ -7,7 +7,6 @@ import {
   Grid,
   theme,
   ConfigProvider,
-  Modal,
 } from "antd";
 import {
   UserOutlined,
@@ -16,6 +15,7 @@ import {
   LeftOutlined,
   RightOutlined,
   CalendarOutlined,
+  GlobalOutlined,
 } from "@ant-design/icons";
 import { useTranslate, useLogout, useLink } from "@refinedev/core";
 
@@ -23,11 +23,11 @@ import { drawerButtonStyles } from "./styles";
 import type { RefineThemedLayoutV2SiderProps } from "./types";
 import { ThemedTitleV2 } from "./ThemedTitle";
 import { useThemedLayoutContext } from "./UseThemeLayoutContext";
+import { useModal } from "@/contexts/ModalProvider";
 
 export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
   Title: TitleFromProps,
   fixed,
-  activeItemDisabled = false,
 }) => {
   const { token } = theme.useToken();
   const {
@@ -41,17 +41,19 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
   const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
 
   useEffect(() => {
-    const updatePath = () => {
-      setCurrentPath(window.location.pathname);
-    };
+    if (!mobileSiderOpen && isLogoutModalVisible) {
+      setIsLogoutModalVisible(true);
+    }
+  }, [mobileSiderOpen]);
+
+  useEffect(() => {
+    const updatePath = () => setCurrentPath(window.location.pathname);
 
     if (typeof window !== "undefined") {
       updatePath();
       window.addEventListener("popstate", updatePath);
 
-      const handleHistoryChange = () => {
-        setTimeout(updatePath, 0);
-      };
+      const handleHistoryChange = () => setTimeout(updatePath, 0);
 
       const originalPushState = window.history.pushState;
       const originalReplaceState = window.history.replaceState;
@@ -82,19 +84,21 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
   const isMobile = !breakpoint.lg;
 
   const RenderToTitle = TitleFromProps ?? ThemedTitleV2;
+  const { showModal } = useModal();
 
-  // Function to show the logout confirmation modal
   const handleLogoutClick = () => {
-    console.log("Logout clicked! Opening modal..."); // Debugging line
-    setIsLogoutModalVisible(true); // Show the modal
+    setMobileSiderOpen(false);
+    showModal({
+      title: "Confirm Logout",
+      content: <p>Are you sure you want to logout?</p>,
+      onOk: confirmLogout,
+      okText: "Logout",
+      cancelText: "Cancel",
+    });
   };
 
-  // Function to handle the confirmed logout
   const confirmLogout = () => {
-    console.log("Confirming logout..."); // Debugging line
-  setMobileSiderOpen(false); // Close the drawer first before logging out
-  mutateLogout(); // Trigger the logout action
-  setIsLogoutModalVisible(false); // Close the modal
+    mutateLogout();
   };
 
   const handleTitleClick = () => {
@@ -141,105 +145,121 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
       key: "logout",
       icon: <LogoutOutlined />,
       label: translate("buttons.logout", "Logout"),
-      onClick: handleLogoutClick, // Open modal on click
+      onClick: handleLogoutClick,
     },
   ];
 
-  const renderMenu = () => {
-    return (
-      <Menu
-        selectedKeys={[currentPath]}
-        mode="inline"
-        items={items.map((item) => {
-          if (item.key === "logout") {
-            return {
-              ...item,
-              onClick: () => {
-                handleLogoutClick(); // Show the logout modal
-              },
-            };
-          }
-          return item;
-        })}
+  const renderFooter = () => (
+    <div
+      style={{
+        padding: "10px 16px",
+        textAlign: "center",
+        fontSize: "11px",
+        color: token.colorTextSecondary,
+        borderTop: `1px solid ${token.colorBorderSecondary}`,
+        marginTop: "16px",
+      }}
+    >
+      <a
+        href="https://www.jaazieldovale.com/"
+        target="_blank"
+        rel="noopener noreferrer"
         style={{
-          paddingTop: "8px",
-          border: "none",
-          overflow: "auto",
-          height: "calc(100% - 72px)",
+          display: "block",
+          marginTop: "8px",
+          color: token.colorTextSecondary,
         }}
-        onClick={(e) => {
-          if (e.key !== "logout") {
-            setMobileSiderOpen(false); // Close drawer for non-logout items
-          }
-        }}
-      />
-    );
-  };
+      >
+        <GlobalOutlined style={{ fontSize: "17px" }} />
+      </a>
+      <span>Developed by Jaaziel do Vale</span>
+    </div>
+  );
 
-  const renderDrawerSider = () => {
-    return (
-      <>
-        <Drawer
-          open={mobileSiderOpen}
-          onClose={() => setMobileSiderOpen(false)}
-          placement="left"
-          closable={false}
-          width={200}
-          styles={{ body: { padding: 0 } }}
-          maskClosable={true}
-        >
-          <Layout>
-            <Layout.Sider
+  const renderMenu = () => (
+    <Menu
+      selectedKeys={[currentPath]}
+      mode="inline"
+      items={items}
+      style={{
+        paddingTop: "8px",
+        border: "none",
+        overflow: "auto",
+        flex: 1,
+      }}
+      onClick={(e) => {
+        if (e.key !== "logout") {
+          setMobileSiderOpen(false);
+        }
+      }}
+    />
+  );
+
+  const renderDrawerSider = () => (
+    <>
+      <Drawer
+        open={mobileSiderOpen}
+        onClose={() => setMobileSiderOpen(false)}
+        placement="left"
+        closable={false}
+        width={200}
+        styles={{ body: { padding: 0 } }}
+        maskClosable={true}
+      >
+        <Layout>
+          <Layout.Sider
+            style={{
+              height: "100vh",
+              backgroundColor: token.colorBgContainer,
+              borderRight: `1px solid ${token.colorBgElevated}`,
+            }}
+          >
+            <div
               style={{
-                height: "100vh",
-                backgroundColor: token.colorBgContainer,
-                borderRight: `1px solid ${token.colorBgElevated}`,
+                width: "200px",
+                padding: "0 16px",
+                display: "flex",
+                justifyContent: "flex-start",
+                alignItems: "center",
+                height: "64px",
+                backgroundColor: token.colorBgElevated,
               }}
             >
-              <div
-                style={{
-                  width: "200px",
-                  padding: "0 16px",
-                  display: "flex",
-                  justifyContent: "flex-start",
-                  alignItems: "center",
-                  height: "64px",
-                  backgroundColor: token.colorBgElevated,
-                }}
-              >
-                <RenderToTitle
-                  collapsed={false}
-                  onTitleClick={handleTitleClick}
-                />
-              </div>
-              {renderMenu()} {/* Ensure logout button appears in the drawer */}
-            </Layout.Sider>
-          </Layout>
-        </Drawer>
-        <Button
-          style={drawerButtonStyles}
-          size="large"
-          onClick={() => setMobileSiderOpen(true)}
-          icon={<BarsOutlined />}
-        />
-      </>
-    );
-  };
-
-  if (isMobile) {
-    return renderDrawerSider();
-  }
+              <RenderToTitle
+                collapsed={false}
+                onTitleClick={handleTitleClick}
+              />
+            </div>
+            {renderMenu()}
+            {renderFooter()}
+          </Layout.Sider>
+        </Layout>
+      </Drawer>
+      <Button
+        style={drawerButtonStyles}
+        size="large"
+        onClick={() => setMobileSiderOpen(true)}
+        icon={<BarsOutlined />}
+      />
+    </>
+  );
 
   const siderStyles: React.CSSProperties = {
     backgroundColor: token.colorBgContainer,
     borderRight: `1px solid ${token.colorBgElevated}`,
+    display: "flex",
+    flexDirection: "column",
+    height: "100vh",
   };
 
   if (fixed) {
     siderStyles.position = "fixed";
     siderStyles.top = 0;
-    siderStyles.height = "100vh";
     siderStyles.zIndex = 999;
+  }
+
+  if (isMobile) {
+    return renderDrawerSider();
   }
 
   return (
@@ -295,20 +315,8 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
           />
         </div>
         {renderMenu()}
+        {!siderCollapsed && renderFooter()}
       </Layout.Sider>
-
-      {/* Logout Confirmation Modal */}
-      <Modal
-        title="Confirm Logout"
-        open={isLogoutModalVisible}
-        onOk={confirmLogout}
-        onCancel={() => setIsLogoutModalVisible(false)}
-        okText="Logout"
-        cancelText="Cancel"
-        zIndex={3000} // Ensure modal appears above Drawer
-      >
-        <p>Are you sure you want to logout?</p>
-      </Modal>
     </>
   );
 };

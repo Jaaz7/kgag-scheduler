@@ -1,6 +1,5 @@
 import React, { Suspense } from "react";
 import { DevtoolsProvider } from "@lib/devtools";
-import { RealTimeProvider } from "@/lib/data-provider/realTimeProvider";
 import { useNotificationProvider } from "@refinedev/antd";
 import { Refine } from "@refinedev/core";
 import { RefineKbar, RefineKbarProvider } from "@refinedev/kbar";
@@ -12,6 +11,7 @@ import { dataProvider } from "@/lib/data-provider";
 import AuthWrapper from "@/components/layouts/AuthWrapper";
 import { resources } from "@/components/common/resources";
 import { Spin } from "antd";
+import { ModalProvider } from "@/contexts/ModalProvider";
 
 import "@/styles/globals.css";
 import "@refinedev/antd/dist/reset.css";
@@ -28,7 +28,7 @@ export default function RootLayout({
           <AntdRegistry>
             <ColorModeContextProvider>
               <DevtoolsProvider>
-                <RealTimeProvider>
+                <ModalProvider>
                   <Suspense fallback={<Spin size="large" />}>
                     <Refine
                       routerProvider={routerProvider}
@@ -47,7 +47,7 @@ export default function RootLayout({
                       <RefineKbar />
                     </Refine>
                   </Suspense>
-                </RealTimeProvider>
+                </ModalProvider>
               </DevtoolsProvider>
             </ColorModeContextProvider>
           </AntdRegistry>
