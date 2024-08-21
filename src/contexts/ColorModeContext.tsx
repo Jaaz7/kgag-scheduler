@@ -25,32 +25,30 @@ type ColorModeContextProviderProps = {
 
 export const ColorModeContextProvider: React.FC<
   PropsWithChildren<ColorModeContextProviderProps>
-> = ({ children, defaultMode }) => {
-  const [isMounted, setIsMounted] = useState(false);
-  const [mode, setMode] = useState(defaultMode || "light");
+> = ({ children }) => {
+  const [mode, setMode] = useState("light");
 
   useEffect(() => {
-    setIsMounted(true);
+    const storedTheme = Cookies.get("theme");
+
+    if (storedTheme) {
+      setMode(storedTheme);
+    }
   }, []);
 
-  useEffect(() => {
-    if (isMounted) {
-      const theme = Cookies.get("theme") || "light";
-      setMode(theme);
-    }
-  }, [isMounted]);
-
   const setColorMode = () => {
-    if (mode === "light") {
-      setMode("dark");
-      Cookies.set("theme", "dark");
-    } else {
-      setMode("light");
-      Cookies.set("theme", "light");
-    }
+    const newMode = mode === "light" ? "dark" : "light";
+    setMode(newMode);
+    Cookies.set("theme", newMode, { expires: 365 });
   };
 
   const { darkAlgorithm, defaultAlgorithm } = theme;
+
+  useEffect(() => {
+    document.body.style.transition = "background-color 0.3s ease";
+    document.body.style.backgroundColor =
+      mode === "dark" ? "#141414" : "#ffffff";
+  }, [mode]);
 
   return (
     <ColorModeContext.Provider
@@ -63,6 +61,11 @@ export const ColorModeContextProvider: React.FC<
         theme={{
           ...RefineThemes.Blue,
           algorithm: mode === "light" ? defaultAlgorithm : darkAlgorithm,
+          token: {
+            colorPrimary: mode === "dark" ? "#1890ff" : "#0050b3",
+            colorBgBase: mode === "dark" ? "#141414" : "#ffffff",
+            colorTextBase: mode === "dark" ? "#f0f0f0" : "#000000",
+          },
         }}
       >
         <AntdApp>{children}</AntdApp>

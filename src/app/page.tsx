@@ -1,6 +1,6 @@
 "use client";
 
-import LoginForm from "@/components/auth/LoginForm";
+import LoginForm from "@components/layouts/LoginForm";
 
 export default function IndexPage() {
   return <LoginForm />;

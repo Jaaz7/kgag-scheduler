@@ -15,7 +15,7 @@ import {
   LeftOutlined,
   RightOutlined,
   CalendarOutlined,
-  GlobalOutlined,
+  CodeOutlined,
 } from "@ant-design/icons";
 import { useTranslate, useLogout, useLink } from "@refinedev/core";
 
@@ -24,6 +24,7 @@ import type { RefineThemedLayoutV2SiderProps } from "./types";
 import { ThemedTitleV2 } from "./ThemedTitle";
 import { useThemedLayoutContext } from "./UseThemeLayoutContext";
 import { useModal } from "@/contexts/ModalProvider";
+import { ColorModeContext } from "@/contexts/ColorModeContext";
 
 export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
   Title: TitleFromProps,
@@ -82,9 +83,9 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
   const { mutate: mutateLogout } = useLogout();
   const breakpoint = Grid.useBreakpoint();
   const isMobile = !breakpoint.lg;
-
   const RenderToTitle = TitleFromProps ?? ThemedTitleV2;
   const { showModal } = useModal();
+  const { mode } = useContext(ColorModeContext);
 
   const handleLogoutClick = () => {
     setMobileSiderOpen(false);
@@ -129,7 +130,11 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
       ),
       style:
         currentPath === "/schedule-hb"
-          ? { backgroundColor: "#e6f7ff", color: token.colorPrimary }
+          ? {
+              backgroundColor: mode === "dark" ? "#40a9ff" : "#e6f7ff", // Light blue background for dark mode, and original light blue for light mode
+              color: mode === "dark" ? "#fff" : token.colorPrimary, // White text for dark mode, and primary text color for light mode
+              borderColor: mode === "dark" ? "#40a9ff" : token.colorPrimary,
+            }
           : {},
     },
     {
@@ -138,7 +143,11 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
       label: <Link to="/manage-users">Manage Users</Link>,
       style:
         currentPath === "/manage-users"
-          ? { backgroundColor: "#e6f7ff", color: token.colorPrimary }
+          ? {
+              backgroundColor: mode === "dark" ? "#40a9ff" : "#e6f7ff", // Light blue background for dark mode, and original light blue for light mode
+              color: mode === "dark" ? "#fff" : token.colorPrimary, // White text for dark mode, and primary text color for light mode
+              borderColor: mode === "dark" ? "#40a9ff" : token.colorPrimary,
+            }
           : {},
     },
     {
@@ -154,7 +163,7 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
       style={{
         padding: "10px 16px",
         textAlign: "center",
-        fontSize: "11px",
+        fontSize: isMobile ? "10px" : "11px",
         color: token.colorTextSecondary,
         borderTop: `1px solid ${token.colorBorderSecondary}`,
         marginTop: "16px",
@@ -167,12 +176,35 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
         style={{
           display: "block",
           marginTop: "8px",
-          color: token.colorTextSecondary,
+          color: token.colorTextBase,
         }}
       >
-        <GlobalOutlined style={{ fontSize: "15px" }} />
+        <CodeOutlined
+          style={{
+            fontSize: "18px",
+            animation: "pop-up 4s ease-in-out infinite",
+            marginBottom: isMobile ? "8px" : "4px",
+          }}
+        />
       </a>
       <span>Developed by Jaaziel do Vale</span>
+
+      <style jsx>{`
+        @keyframes pop-up {
+          0% {
+            transform: scale(1);
+          }
+          10% {
+            transform: scale(1.15);
+          }
+          20% {
+            transform: scale(1);
+          }
+          100% {
+            transform: scale(1);
+          }
+        }
+      `}</style>
     </div>
   );
 
@@ -186,6 +218,7 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
         border: "none",
         overflow: "auto",
         flex: 1,
+        backgroundColor: mode === "dark" ? "#2a2a2a" : token.colorBgContainer,
       }}
       onClick={(e) => {
         if (e.key !== "logout") {
@@ -203,40 +236,60 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
         placement="left"
         closable={false}
         width={200}
-        styles={{ body: { padding: 0 } }}
         maskClosable={true}
+        styles={{
+          body: {
+            padding: 0,
+            display: "flex",
+            flexDirection: "column",
+            height: "100%",
+            backgroundColor:
+              mode === "dark" ? "#2a2a2a" : token.colorBgContainer,
+          },
+        }}
       >
-        <Layout>
-          <Layout.Sider
+        <div
+          style={{ display: "flex", flexDirection: "column", height: "100%" }}
+        >
+          <div
             style={{
-              height: "100vh",
-              backgroundColor: token.colorBgContainer,
-              borderRight: `1px solid ${token.colorBgElevated}`,
+              padding: "0 16px",
+              display: "flex",
+              justifyContent: "flex-start",
+              alignItems: "center",
+              height: "64px",
+              backgroundColor:
+                mode === "dark" ? "#2a2a2a" : token.colorBgContainer,
             }}
           >
-            <div
-              style={{
-                width: "200px",
-                padding: "0 16px",
-                display: "flex",
-                justifyContent: "flex-start",
-                alignItems: "center",
-                height: "64px",
-                backgroundColor: token.colorBgElevated,
-              }}
-            >
-              <RenderToTitle
-                collapsed={false}
-                onTitleClick={handleTitleClick}
-              />
-            </div>
-            {renderMenu()}
+            <RenderToTitle collapsed={false} onTitleClick={handleTitleClick} />
+          </div>
+
+          <div style={{ flex: 1, overflowY: "auto" }}>{renderMenu()}</div>
+
+          <div
+            style={{
+              padding: "10px 16px",
+              textAlign: "center",
+              fontSize: "12px",
+              color: token.colorTextSecondary,
+              backgroundColor:
+                mode === "dark" ? "#2a2a2a" : token.colorBgContainer,
+              marginTop: "auto",
+            }}
+          >
             {renderFooter()}
-          </Layout.Sider>
-        </Layout>
+          </div>
+        </div>
       </Drawer>
+
       <Button
-        style={drawerButtonStyles}
+        style={{
+          ...drawerButtonStyles,
+          position: "fixed",
+          top: "15px",
+          zIndex: 1000,
+        }}
         size="large"
         onClick={() => setMobileSiderOpen(true)}
         icon={<BarsOutlined />}
@@ -245,8 +298,7 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
   );
 
   const siderStyles: React.CSSProperties = {
-    backgroundColor: token.colorBgContainer,
-    borderRight: `1px solid ${token.colorBgElevated}`,
+    backgroundColor: mode === "dark" ? "#2a2a2a" : token.colorBgContainer,
     display: "flex",
     flexDirection: "column",
     height: "100vh",
@@ -290,7 +342,8 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
               borderRadius: 0,
               height: "100%",
               width: "100%",
-              backgroundColor: token.colorBgElevated,
+              backgroundColor:
+                mode === "dark" ? "#2a2a2a" : token.colorBgContainer,
             }}
           >
             {renderClosingIcons()}
@@ -305,7 +358,8 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
             justifyContent: siderCollapsed ? "center" : "flex-start",
             alignItems: "center",
             height: "64px",
-            backgroundColor: token.colorBgElevated,
+            backgroundColor:
+              mode === "dark" ? "#2a2a2a" : token.colorBgContainer,
             fontSize: "14px",
           }}
         >
@@ -314,8 +368,16 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
             onTitleClick={handleTitleClick}
           />
         </div>
-        {renderMenu()}
-        {!siderCollapsed && renderFooter()}
+
+        <div
+          style={{ display: "flex", flexDirection: "column", height: "100%" }}
+        >
+          <div style={{ flex: 1, overflow: "auto" }}>{renderMenu()}</div>
+
+          {!siderCollapsed && (
+            <div style={{ marginBottom: "60px" }}> {renderFooter()}</div>
+          )}
+        </div>
       </Layout.Sider>
     </>
   );

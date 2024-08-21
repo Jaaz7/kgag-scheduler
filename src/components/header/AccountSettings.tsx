@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   Button,
   Card,
@@ -26,6 +26,9 @@ import { useQuery } from "@tanstack/react-query";
 import Resizer from "react-image-file-resizer";
 import { isEqual } from "lodash";
 import { useModal } from "@/contexts/ModalProvider";
+import { ColorModeContext } from "@contexts/ColorModeContext";
+import { App } from "antd";
+import "@/styles/globals.css";
 
 const { Option } = Select;
 
@@ -56,6 +59,7 @@ export const AccountSettings = ({
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordsMatch, setPasswordsMatch] = useState(false);
   const { showModal } = useModal();
+  const { mode } = useContext(ColorModeContext);
 
   // Fetch user data when drawer is opened
   const { data, isLoading, refetch } = useQuery<any, HttpError>(
@@ -110,17 +114,61 @@ export const AccountSettings = ({
     }
   );
 
+  const showMessage = (
+    type: "success" | "error" | "info" | "warning" | "loading",
+    content: string
+  ) => {
+    return (
+      <App>
+        {(() => {
+          switch (type) {
+            case "success":
+              message.success(content);
+              break;
+            case "error":
+              message.error(content);
+              break;
+            case "info":
+              message.info(content);
+              break;
+            case "warning":
+              message.warning(content);
+              break;
+            case "loading":
+              message.loading(content);
+              break;
+            default:
+              break;
+          }
+          return null;
+        })()}
+      </App>
+    );
+  };
+
+  const headerStyle: React.CSSProperties = {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "16px",
+    backgroundColor: mode === "dark" ? "rgb(51 51 51)" : "#fff",
+    color: mode === "dark" ? "#f0f0f0" : "  ",
+  };
+
+  const disabledInputStyle: React.CSSProperties = {
+    backgroundColor: mode === "dark" ? "#3a3a3a" : "#f0f0f0",
+    color: mode === "dark" ? "#b0b0b0" : "#",
+  };
+
   // Reset form and password fields when drawer is opened
   useEffect(() => {
-    if (opened) {
-      form.resetFields();
-      setPassword("");
-      setConfirmPassword("");
-      setPasswordErrors([]);
-      setPasswordValid(false);
-      setPasswordsMatch(false);
-    }
-  }, [opened, form]);
+    form.resetFields();
+    setPassword("");
+    setConfirmPassword("");
+    setPasswordErrors([]);
+    setPasswordValid(false);
+    setPasswordsMatch(false);
+  }, [form]);
 
   // Resize image to a smaller size for avatar upload
   const resizeImage = (file: File): Promise<Blob> => {
@@ -206,7 +254,8 @@ export const AccountSettings = ({
 
       if (password || confirmPassword) {
         if (!validatePassword(password) || password !== confirmPassword) {
-          message.error(
+          showMessage(
+            password !== confirmPassword ? "error" : "warning",
             password !== confirmPassword
               ? "Passwords do not match."
               : "Password does not meet the minimum requirements."
@@ -222,7 +271,7 @@ export const AccountSettings = ({
             .eq("user_id", userId);
           passwordUpdated = true;
         } catch {
-          message.error("Failed to update password.");
+          showMessage("error", "Failed to update password.");
           setLoading(false);
           return;
         }
@@ -251,7 +300,7 @@ export const AccountSettings = ({
             onAvatarUpdate(signedUrl);
           }
         } catch {
-          message.error("Failed to update avatar.");
+          showMessage("error", "Failed to update avatar.");
           setLoading(false);
           return;
         }
@@ -281,13 +330,14 @@ export const AccountSettings = ({
             .eq("user_id", userId);
           settingsUpdated = true;
         } catch {
-          message.error("Failed to update profile.");
+          showMessage("error", "Failed to update profile.");
           setLoading(false);
           return;
         }
       }
 
-      message.success(
+      showMessage(
+        "success",
         passwordUpdated && settingsUpdated
           ? "Password and settings saved successfully."
           : passwordUpdated
@@ -297,7 +347,7 @@ export const AccountSettings = ({
 
       setOpened(false);
     } catch {
-      message.error("An unexpected error occurred.");
+      showMessage("error", "An unexpected error occurred.");
     } finally {
       setLoading(false);
     }
@@ -318,11 +368,11 @@ export const AccountSettings = ({
 
         setAvatarUrl(null);
         onAvatarUpdate(null);
-        message.success("Avatar deleted successfully!");
+        showMessage("success", "Avatar deleted successfully!");
         setOpened(false);
       }
     } catch {
-      message.error("Failed to delete avatar.");
+      showMessage("error", "Failed to delete avatar.");
     }
   };
 
@@ -342,33 +392,59 @@ export const AccountSettings = ({
       <Drawer
         open={opened}
         width={756}
+        onClose={() => setOpened(false)}
+        styles={{ body: {
+          padding: 0, 
+          display: "flex", 
+          justifyContent: "center", 
+          alignItems: "center", 
+          height: "100%", 
+          overflow: "hidden"}
+        }}
         style={{
           display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          transition: "all 0.3s ease",
         }}
       >
-        <Spin />
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            width: "100%",
+            height: "100%",
+            backgroundColor: mode === "dark" ? "#141414" : "#fff",
+            color: mode === "dark" ? "#fff" : "#000",
+          }}
+        >
+          <Spin
+            size="large"
+            style={{
+              color: mode === "dark" ? "#40a9ff" : "#1890ff",
+            }}
+          />
+        </div>
       </Drawer>
     );
   }
 
   return (
-    <>
-      <Drawer onClose={() => setOpened(false)} open={opened} width={756}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            padding: "16px",
-            backgroundColor: "#fff",
-          }}
-        >
+    <Drawer
+      onClose={() => setOpened(false)}
+      open={opened}
+      width={756}
+      style={{
+        transition: "all 0.3s ease",
+      }}
+    >
+    
+        <div style={headerStyle}>
           <strong>Account Settings</strong>
         </div>
         <div style={{ padding: "16px" }}>
-          <Card>
+          <Card
+            style={{ backgroundColor: mode === "dark" ? "#2a2a2a" : "#fff" }}
+          >
             <Form form={form} layout="vertical">
               <CustomAvatar
                 shape="square"
@@ -377,13 +453,13 @@ export const AccountSettings = ({
                 style={{ width: 96, height: 96, marginBottom: "20px" }}
               />
               <Form.Item label="Name" name="name">
-                <Input disabled style={{ backgroundColor: "#f0f0f0" }} />
+                <Input disabled style={disabledInputStyle} />
               </Form.Item>
               <Form.Item label="User Type" name="userType">
-                <Input disabled style={{ backgroundColor: "#f0f0f0" }} />
+                <Input disabled style={disabledInputStyle} />
               </Form.Item>
               <Form.Item label="Email" name="email">
-                <Input disabled style={{ backgroundColor: "#f0f0f0" }} />
+                <Input disabled style={disabledInputStyle} />
               </Form.Item>
 
               <Form.Item
@@ -409,26 +485,28 @@ export const AccountSettings = ({
               </Form.Item>
 
               <Form.Item label="Day Preferences">
-                <div style={{ display: "flex", alignItems: "center" }}>
+                <>
                   <Checkbox
                     checked={noPreference}
                     onChange={(e) => {
                       setNoPreference(e.target.checked);
                       form.setFieldsValue({ dayPreferences: [] });
                     }}
-                    style={{ marginRight: 8 }}
+                    style={{ whiteSpace: "nowrap" }}
                   >
                     No Preference
                   </Checkbox>
                   <Form.Item
                     name="dayPreferences"
                     style={{ flex: 1, marginBottom: 0 }}
+                    noStyle
                   >
                     <Select
                       mode="multiple"
                       placeholder="Select your day preferences"
                       allowClear
                       disabled={noPreference}
+                      style={{ width: "100%" }}
                     >
                       <Option value="Montag">Montag</Option>
                       <Option value="Dienstag">Dienstag</Option>
@@ -438,7 +516,7 @@ export const AccountSettings = ({
                       <Option value="Samstag">Samstag</Option>
                     </Select>
                   </Form.Item>
-                </div>
+                </>
               </Form.Item>
 
               <Form.Item label="Password">
@@ -449,7 +527,11 @@ export const AccountSettings = ({
                 />
                 {passwordErrors.length > 0 && (
                   <ul
-                    style={{ color: "red", paddingLeft: "20px", marginTop: 8 }}
+                    style={{
+                      color: "red",
+                      paddingLeft: "20px",
+                      marginTop: 8,
+                    }}
                   >
                     {passwordErrors.map((error, index) => (
                       <li key={index}>
@@ -484,7 +566,14 @@ export const AccountSettings = ({
                 )}
               </Form.Item>
 
-              <Form.Item label="Upload Avatar" name="avatarUrl">
+              <Form.Item
+                label="Upload Avatar"
+                name="avatarUrl"
+                valuePropName="fileList"
+                getValueFromEvent={(e) =>
+                  Array.isArray(e) ? e : e && e.fileList
+                }
+              >
                 <Upload
                   name="avatar"
                   listType="picture"
@@ -544,6 +633,7 @@ export const AccountSettings = ({
                 </Button>
               )}
             </Form>
+
             <div
               style={{
                 display: "flex",
@@ -563,7 +653,7 @@ export const AccountSettings = ({
             </div>
           </Card>
         </div>
-      </Drawer>
-    </>
+
+    </Drawer>
   );
 };

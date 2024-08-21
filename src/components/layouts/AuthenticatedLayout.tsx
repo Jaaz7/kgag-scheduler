@@ -1,7 +1,7 @@
 import React, { useEffect, useState, Suspense } from "react";
 import { usePathname } from "next/navigation";
 import { ThemedLayoutV2, ThemedTitleV2 } from "@components/sidebar";
-import { Header } from "@components/header/Header";
+import { Header } from "@components/header/Header";  // Header with ThemeSwitcher inside
 import NotFound from "@/app/not-found";
 import "@/styles/globals.css";
 
@@ -17,8 +17,6 @@ export default function AuthenticatedLayout({
 
   useEffect(() => {
     const validPaths = ["/", "/schedule-hb", "/manage-users"];
-    3;
-
     if (validPaths.includes(pathname)) {
       setIsValidPath(true);
     } else {

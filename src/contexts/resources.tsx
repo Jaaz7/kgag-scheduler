@@ -1,4 +1,3 @@
-// resources.ts
 import { IResourceItem } from "@refinedev/core";
 import { CalendarOutlined, UserOutlined } from "@ant-design/icons";
 
