@@ -318,11 +318,10 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
 
   return (
     <>
-      {fixed && (
+      {(
         <div
           style={{
             width: siderCollapsed ? "80px" : "200px",
-            transition: "all 0.2s",
           }}
         />
       )}

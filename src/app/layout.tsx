@@ -5,10 +5,7 @@ import { Refine } from "@refinedev/core";
 import { RefineKbar, RefineKbarProvider } from "@refinedev/kbar";
 import routerProvider from "@refinedev/nextjs-router";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
-import {
-  ColorModeContextProvider,
-  ColorModeContext,
-} from "@contexts/ColorModeContext";
+import { ColorModeContextProvider } from "@contexts/ColorModeContext";
 import { authProviderClient } from "@/lib/auth-provider";
 import { dataProvider } from "@/lib/data-provider";
 import AuthWrapper from "@/components/layouts/AuthWrapper";
@@ -33,7 +30,26 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <ColorModeContextProvider>
                 <DevtoolsProvider>
                   <ModalProvider>
-                    <Suspense fallback={<Spin />}>
+                    <Suspense
+                      fallback={
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            height: "100vh",
+                            backgroundColor: "inherit",
+                          }}
+                        >
+                          <Spin
+                            size="large"
+                            style={{
+                              color: "inherit",
+                            }}
+                          />
+                        </div>
+                      }
+                    >
                       <Refine
                         routerProvider={routerProvider}
                         authProvider={authProviderClient}

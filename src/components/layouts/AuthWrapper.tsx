@@ -47,8 +47,6 @@ export default function AuthWrapper({
           alignItems: "center",
           height: "100vh",
           backgroundColor: backgroundColor,
-          color: mode === "dark" ? "#fff" : "#000",
-          transition: "background-color 0.3s ease",
         }}
       >
         <Spin

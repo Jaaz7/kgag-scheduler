@@ -1,10 +1,15 @@
 import React, { useEffect, useState, Suspense, useContext } from "react";
 import { usePathname } from "next/navigation";
-import { ThemedLayoutV2, ThemedTitleV2 } from "@components/sidebar";
+import { Grid, Layout as AntdLayout } from "antd";
 import { Header } from "@components/header/Header";
 import NotFound from "@/app/not-found";
 import "@/styles/globals.css";
+import { MainContent } from "@components/layouts/MainContent";
+import { ThemedSiderV2 as Sider } from "@components/sidebar/Sider";
+import { useResponsiveSider } from "@components/layouts/useResponsiveHook";
+import { ThemedLayoutContextProvider } from "@components/sidebar/ThemedLayoutContext";
 import { ColorModeContext } from "@/contexts/ColorModeContext";
+import { ThemedTitleV2 } from "@components/sidebar/ThemedTitle";
 
 interface AuthenticatedLayoutProps {
   children: React.ReactNode;
@@ -15,64 +20,47 @@ export default function AuthenticatedLayout({
 }: AuthenticatedLayoutProps) {
   const pathname = usePathname();
   const [isValidPath, setIsValidPath] = useState<boolean | null>(null);
-  const [isSiderCollapsed, setIsSiderCollapsed] = useState(true);
-  const [isDesktop, setIsDesktop] = useState<boolean>(true);
+  const { siderCollapsed, setSiderCollapsed } = useResponsiveSider();
   const { mode } = useContext(ColorModeContext);
 
+  // Check if the path is valid for authenticated routes
   useEffect(() => {
     const validPaths = ["/", "/schedule-hb", "/manage-users"];
-    if (validPaths.includes(pathname)) {
-      setIsValidPath(true);
-    } else {
-      setIsValidPath(false);
-    }
+    setIsValidPath(validPaths.includes(pathname));
   }, [pathname]);
 
-  useEffect(() => {
-    const handleResize = () => {
-      setIsDesktop(window.innerWidth > 991);
-    };
-
-    window.addEventListener("resize", handleResize);
-    handleResize();
-
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
+  // Return NotFound component if the route is invalid
   if (isValidPath === false) {
     return <NotFound />;
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-      <Header />
-
-      <div style={{ display: "flex", flexGrow: 1 }}>
-        <ThemedLayoutV2
-          siderCollapsed={isSiderCollapsed}
-          setSiderCollapsed={setIsSiderCollapsed}
-          Title={(titleProps) => (
-            <ThemedTitleV2 {...titleProps} text="HB Shop" link="/schedule-hb" />
-          )}
-        >
-          <div
-            style={{
-              marginLeft: isDesktop
-                ? isSiderCollapsed
-                  ? "80px"
-                  : "200px"
-                : "0",
-              flexGrow: 1,
-              padding: "12px",
-              overflowY: "auto",
-              backgroundColor: mode === "dark" ? "#141414" : "#f5f5f5",
-              transition: "margin-left 0.2s ease",
-            }}
-          >
-            <Suspense>{children}</Suspense>
-          </div>
-        </ThemedLayoutV2>
+    <ThemedLayoutContextProvider>
+      <div
+        style={{ display: "flex", flexDirection: "column", height: "100vh" }}
+      >
+        <Header />
+        <div style={{ display: "flex", flexGrow: 1 }}>
+          <AntdLayout style={{ display: "flex" }}>
+            <Sider
+              siderCollapsed={siderCollapsed}
+              setSiderCollapsed={setSiderCollapsed}
+              Title={(titleProps) => (
+                <ThemedTitleV2
+                  {...titleProps}
+                  text="HB Shop"
+                  link="/schedule-hb"
+                />
+              )}
+            />
+            <AntdLayout style={{ flexGrow: 1 }}>
+              <AntdLayout.Content>
+                <MainContent mode={mode}>{children}</MainContent>
+              </AntdLayout.Content>
+            </AntdLayout>
+          </AntdLayout>
+        </div>
       </div>
-    </div>
+    </ThemedLayoutContextProvider>
   );
 }
