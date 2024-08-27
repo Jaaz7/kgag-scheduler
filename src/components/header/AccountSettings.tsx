@@ -37,6 +37,8 @@ interface Props {
   setOpened: (opened: boolean) => void;
   userId: string;
   onAvatarUpdate: (avatarUrl: string | null) => void;
+  preloadedData?: any;
+  isSettingsLoaded?: boolean;
 }
 
 export const AccountSettings = ({
@@ -162,13 +164,36 @@ export const AccountSettings = ({
 
   // Reset form and password fields when drawer is opened
   useEffect(() => {
-    form.resetFields();
-    setPassword("");
-    setConfirmPassword("");
-    setPasswordErrors([]);
-    setPasswordValid(false);
-    setPasswordsMatch(false);
-  }, [form]);
+    const resetFormAndData = async () => {
+      // Reset form fields
+      form.resetFields();
+  
+      // Reset password fields
+      setPassword("");
+      setConfirmPassword("");
+      setPasswordErrors([]);
+      setPasswordValid(false);
+      setPasswordsMatch(false);
+  
+      // Reset image and image preview
+      setSelectedFile(null);
+      setPreviewImage(null);
+  
+      // Optionally reset the avatar if required
+      if (data?.avatar_url) {
+        const signedUrl = await fetchSignedAvatarUrl(data.avatar_url);
+        setAvatarUrl(signedUrl);
+      } else {
+        setAvatarUrl(null);
+      }
+    };
+  
+    if (opened) {
+      resetFormAndData();
+    }
+  }, [opened, form, data?.avatar_url]);
+  
+  
 
   // Resize image to a smaller size for avatar upload
   const resizeImage = (file: File): Promise<Blob> => {
@@ -393,13 +418,15 @@ export const AccountSettings = ({
         open={opened}
         width={756}
         onClose={() => setOpened(false)}
-        styles={{ body: {
-          padding: 0, 
-          display: "flex", 
-          justifyContent: "center", 
-          alignItems: "center", 
-          height: "100%", 
-          overflow: "hidden"}
+        styles={{
+          body: {
+            padding: 0,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100%",
+            overflow: "hidden",
+          },
         }}
         style={{
           display: "flex",
@@ -437,223 +464,216 @@ export const AccountSettings = ({
         transition: "all 0.3s ease",
       }}
     >
-    
-        <div style={headerStyle}>
-          <strong>Account Settings</strong>
-        </div>
-        <div style={{ padding: "16px" }}>
-          <Card
-            style={{ backgroundColor: mode === "dark" ? "#2a2a2a" : "#fff" }}
-          >
-            <Form form={form} layout="vertical">
-              <CustomAvatar
-                shape="square"
-                src={avatarUrl}
-                initials={initials}
-                style={{ width: 96, height: 96, marginBottom: "20px" }}
+      <div style={headerStyle}>
+        <strong>Account Settings</strong>
+      </div>
+      <div style={{ padding: "16px" }}>
+        <Card style={{ backgroundColor: mode === "dark" ? "#2a2a2a" : "#fff" }}>
+          <Form form={form} layout="vertical">
+            <CustomAvatar
+              shape="square"
+              src={avatarUrl}
+              initials={initials}
+              style={{ width: 96, height: 96, marginBottom: "20px" }}
+            />
+            <Form.Item label="Name" name="name">
+              <Input disabled style={disabledInputStyle} />
+            </Form.Item>
+            <Form.Item label="User Type" name="userType">
+              <Input disabled style={disabledInputStyle} />
+            </Form.Item>
+            <Form.Item label="Email" name="email">
+              <Input disabled style={disabledInputStyle} />
+            </Form.Item>
+
+            <Form.Item label="Working Days Per Week" name="work_days_per_week">
+              <Select placeholder="Select number of days">
+                <Option value="1">1 Day</Option>
+                <Option value="2">2 Days</Option>
+                <Option value="3">3 Days</Option>
+                <Option value="4">4 Days</Option>
+                <Option value="5">5 Days</Option>
+              </Select>
+            </Form.Item>
+
+            <Form.Item label="Shift Preference" name="shiftPreference">
+              <Select placeholder="No Preference" allowClear>
+                <Option value="no_preference">No Preference</Option>
+                <Option value="Frühschicht">Frühschicht</Option>
+                <Option value="Mittelschicht">Mittelschicht</Option>
+                <Option value="Spätschicht">Spätschicht</Option>
+              </Select>
+            </Form.Item>
+
+            <Form.Item label="Day Preferences">
+              <>
+                <Checkbox
+                  checked={noPreference}
+                  onChange={(e) => {
+                    setNoPreference(e.target.checked);
+                    form.setFieldsValue({ dayPreferences: [] });
+                  }}
+                  style={{ whiteSpace: "nowrap" }}
+                >
+                  No Preference
+                </Checkbox>
+                <Form.Item
+                  name="dayPreferences"
+                  style={{ flex: 1, marginBottom: 0 }}
+                  noStyle
+                >
+                  <Select
+                    mode="multiple"
+                    placeholder="Select your day preferences"
+                    allowClear
+                    disabled={noPreference}
+                    style={{ width: "100%" }}
+                    showSearch={false}
+                  >
+                    <Option value="Montag">Montag</Option>
+                    <Option value="Dienstag">Dienstag</Option>
+                    <Option value="Mittwoch">Mittwoch</Option>
+                    <Option value="Donnerstag">Donnerstag</Option>
+                    <Option value="Freitag">Freitag</Option>
+                    <Option value="Samstag">Samstag</Option>
+                  </Select>
+                </Form.Item>
+              </>
+            </Form.Item>
+
+            <Form.Item label="Password">
+              <Input.Password
+                value={password}
+                onChange={handlePasswordChange}
+                placeholder="Enter new password"
               />
-              <Form.Item label="Name" name="name">
-                <Input disabled style={disabledInputStyle} />
-              </Form.Item>
-              <Form.Item label="User Type" name="userType">
-                <Input disabled style={disabledInputStyle} />
-              </Form.Item>
-              <Form.Item label="Email" name="email">
-                <Input disabled style={disabledInputStyle} />
-              </Form.Item>
-
-              <Form.Item
-                label="Working Days Per Week"
-                name="work_days_per_week"
-              >
-                <Select placeholder="Select number of days">
-                  <Option value="1">1 Day</Option>
-                  <Option value="2">2 Days</Option>
-                  <Option value="3">3 Days</Option>
-                  <Option value="4">4 Days</Option>
-                  <Option value="5">5 Days</Option>
-                </Select>
-              </Form.Item>
-
-              <Form.Item label="Shift Preference" name="shiftPreference">
-                <Select placeholder="No Preference" allowClear>
-                  <Option value="no_preference">No Preference</Option>
-                  <Option value="Frühschicht">Frühschicht</Option>
-                  <Option value="Mittelschicht">Mittelschicht</Option>
-                  <Option value="Spätschicht">Spätschicht</Option>
-                </Select>
-              </Form.Item>
-
-              <Form.Item label="Day Preferences">
-                <>
-                  <Checkbox
-                    checked={noPreference}
-                    onChange={(e) => {
-                      setNoPreference(e.target.checked);
-                      form.setFieldsValue({ dayPreferences: [] });
-                    }}
-                    style={{ whiteSpace: "nowrap" }}
-                  >
-                    No Preference
-                  </Checkbox>
-                  <Form.Item
-                    name="dayPreferences"
-                    style={{ flex: 1, marginBottom: 0 }}
-                    noStyle
-                  >
-                    <Select
-                      mode="multiple"
-                      placeholder="Select your day preferences"
-                      allowClear
-                      disabled={noPreference}
-                      style={{ width: "100%" }}
-                    >
-                      <Option value="Montag">Montag</Option>
-                      <Option value="Dienstag">Dienstag</Option>
-                      <Option value="Mittwoch">Mittwoch</Option>
-                      <Option value="Donnerstag">Donnerstag</Option>
-                      <Option value="Freitag">Freitag</Option>
-                      <Option value="Samstag">Samstag</Option>
-                    </Select>
-                  </Form.Item>
-                </>
-              </Form.Item>
-
-              <Form.Item label="Password">
-                <Input.Password
-                  value={password}
-                  onChange={handlePasswordChange}
-                  placeholder="Enter new password"
-                />
-                {passwordErrors.length > 0 && (
-                  <ul
-                    style={{
-                      color: "red",
-                      paddingLeft: "20px",
-                      marginTop: 8,
-                    }}
-                  >
-                    {passwordErrors.map((error, index) => (
-                      <li key={index}>
-                        <CloseCircleOutlined /> {error}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                {password && passwordValid && (
-                  <div style={{ color: "green", marginTop: 8 }}>
-                    <CheckCircleOutlined /> Your password meets all
-                    requirements.
-                  </div>
-                )}
-              </Form.Item>
-
-              <Form.Item label="Confirm Password">
-                <Input.Password
-                  value={confirmPassword}
-                  onChange={handleConfirmPasswordChange}
-                  placeholder="Confirm new password"
-                />
-                {confirmPassword && !passwordsMatch && (
-                  <div style={{ color: "red", marginTop: 8 }}>
-                    <CloseCircleOutlined /> Passwords do not match.
-                  </div>
-                )}
-                {confirmPassword && passwordsMatch && (
-                  <div style={{ color: "green", marginTop: 8 }}>
-                    <CheckCircleOutlined /> Passwords match!
-                  </div>
-                )}
-              </Form.Item>
-
-              <Form.Item
-                label="Upload Avatar"
-                name="avatarUrl"
-                valuePropName="fileList"
-                getValueFromEvent={(e) =>
-                  Array.isArray(e) ? e : e && e.fileList
-                }
-              >
-                <Upload
-                  name="avatar"
-                  listType="picture"
-                  maxCount={1}
-                  showUploadList={false}
-                  beforeUpload={(file) => {
-                    setSelectedFile(file);
-                    if (file.type.startsWith("image/")) {
-                      const reader = new FileReader();
-                      reader.onload = () =>
-                        setPreviewImage(reader.result as string);
-                      reader.readAsDataURL(file);
-                    } else {
-                      setPreviewImage(null);
-                    }
-                    return false;
+              {passwordErrors.length > 0 && (
+                <ul
+                  style={{
+                    color: "red",
+                    paddingLeft: "20px",
+                    marginTop: 8,
                   }}
                 >
-                  <Button icon={<UploadOutlined />}>Upload Avatar</Button>
-                </Upload>
-
-                {previewImage && (
-                  <div style={{ marginTop: 16 }}>
-                    <img
-                      src={previewImage}
-                      alt="Avatar Preview"
-                      style={{ width: 100 }}
-                    />
-                  </div>
-                )}
-
-                {selectedFile && (
-                  <div style={{ marginTop: 8 }}>
-                    <Button
-                      type="text"
-                      icon={<DeleteOutlined />}
-                      onClick={() => {
-                        setSelectedFile(null);
-                        setPreviewImage(null);
-                      }}
-                      danger
-                    >
-                      Clear Selected Image
-                    </Button>
-                  </div>
-                )}
-              </Form.Item>
-
-              {avatarUrl && (
-                <Button
-                  type="default"
-                  icon={<DeleteOutlined />}
-                  danger
-                  onClick={handleShowDeleteAvatarModal}
-                >
-                  Delete Current Avatar
-                </Button>
+                  {passwordErrors.map((error, index) => (
+                    <li key={index}>
+                      <CloseCircleOutlined /> {error}
+                    </li>
+                  ))}
+                </ul>
               )}
-            </Form>
+              {password && passwordValid && (
+                <div style={{ color: "green", marginTop: 8 }}>
+                  <CheckCircleOutlined /> Your password meets all requirements.
+                </div>
+              )}
+            </Form.Item>
 
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                marginTop: 24,
-              }}
+            <Form.Item label="Confirm Password">
+              <Input.Password
+                value={confirmPassword}
+                onChange={handleConfirmPasswordChange}
+                placeholder="Confirm new password"
+              />
+              {confirmPassword && !passwordsMatch && (
+                <div style={{ color: "red", marginTop: 8 }}>
+                  <CloseCircleOutlined /> Passwords do not match.
+                </div>
+              )}
+              {confirmPassword && passwordsMatch && (
+                <div style={{ color: "green", marginTop: 8 }}>
+                  <CheckCircleOutlined /> Passwords match!
+                </div>
+              )}
+            </Form.Item>
+
+            <Form.Item
+              label="Upload Avatar"
+              name="avatarUrl"
+              valuePropName="fileList"
+              getValueFromEvent={(e) =>
+                Array.isArray(e) ? e : e && e.fileList
+              }
             >
-              <Button
-                type="primary"
-                onClick={handleSave}
-                loading={loading}
-                style={{ display: "flex", alignItems: "center", gap: "5px" }}
+              <Upload
+                name="avatar"
+                listType="picture"
+                maxCount={1}
+                showUploadList={false}
+                beforeUpload={(file) => {
+                  setSelectedFile(file);
+                  if (file.type.startsWith("image/")) {
+                    const reader = new FileReader();
+                    reader.onload = () =>
+                      setPreviewImage(reader.result as string);
+                    reader.readAsDataURL(file);
+                  } else {
+                    setPreviewImage(null);
+                  }
+                  return false;
+                }}
               >
-                <SaveOutlined style={{ fontSize: "16px" }} />
-                <span>Save</span>
-              </Button>
-            </div>
-          </Card>
-        </div>
+                <Button icon={<UploadOutlined />}>Upload Avatar</Button>
+              </Upload>
 
+              {previewImage && (
+                <div style={{ marginTop: 16 }}>
+                  <img
+                    src={previewImage}
+                    alt="Avatar Preview"
+                    style={{ width: 100 }}
+                  />
+                </div>
+              )}
+
+              {selectedFile && (
+                <div style={{ marginTop: 8 }}>
+                  <Button
+                    type="text"
+                    icon={<DeleteOutlined />}
+                    onClick={() => {
+                      setSelectedFile(null);
+                      setPreviewImage(null);
+                    }}
+                    danger
+                  >
+                    Clear Selected Image
+                  </Button>
+                </div>
+              )}
+            </Form.Item>
+
+            {avatarUrl && (
+              <Button
+                type="default"
+                icon={<DeleteOutlined />}
+                danger
+                onClick={handleShowDeleteAvatarModal}
+              >
+                Delete Current Avatar
+              </Button>
+            )}
+          </Form>
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              marginTop: 24,
+            }}
+          >
+            <Button
+              type="primary"
+              onClick={handleSave}
+              loading={loading}
+              style={{ display: "flex", alignItems: "center", gap: "5px" }}
+            >
+              <SaveOutlined style={{ fontSize: "16px" }} />
+              <span>Save</span>
+            </Button>
+          </div>
+        </Card>
+      </div>
     </Drawer>
   );
 };

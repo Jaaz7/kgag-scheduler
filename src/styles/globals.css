@@ -6,4 +6,20 @@ body {
   box-sizing: border-box;
   font-family: Arial, sans-serif;
   height: 100%;
+  overflow-x: hidden;
+}
+
+@keyframes pop-up {
+  0% {
+    transform: scale(1);
+  }
+  10% {
+    transform: scale(1.15);
+  }
+  20% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1);
+  }
 }

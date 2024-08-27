@@ -22,6 +22,11 @@ export const ThemedTitleV2: React.FC<RefineLayoutThemedTitleProps> = ({
         alignItems: "center",
         fontSize: "inherit",
         cursor: "pointer",
+        padding: "0 12px",
+        overflow: "hidden",
+        zIndex: 1001,
+        position: "relative",
+
         ...wrapperStyles,
       }}
       onClick={onTitleClick}
@@ -37,6 +42,9 @@ export const ThemedTitleV2: React.FC<RefineLayoutThemedTitleProps> = ({
             fontSize: "inherit",
             marginBottom: 0,
             fontWeight: 700,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
           }}
         >
           {defaultText}

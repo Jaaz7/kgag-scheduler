@@ -28,6 +28,7 @@ export default function ScheduleHBPage() {
   return shouldRender ? (
     <Suspense fallback={<div />}>
       <Schedule />
+      <Schedule />
     </Suspense>
   ) : null;
 }
