@@ -6,7 +6,6 @@ import NotFound from "@/app/not-found";
 import "@/styles/globals.css";
 import { MainContent } from "@components/layouts/MainContent";
 import { ThemedSiderV2 as Sider } from "@components/sidebar/Sider";
-import { useResponsiveSider } from "@components/layouts/useResponsiveHook";
 import { ThemedLayoutContextProvider } from "@components/sidebar/ThemedLayoutContext";
 import { ColorModeContext } from "@/contexts/ColorModeContext";
 import { ThemedTitleV2 } from "@components/sidebar/ThemedTitle";
@@ -20,7 +19,6 @@ export default function AuthenticatedLayout({
 }: AuthenticatedLayoutProps) {
   const pathname = usePathname();
   const [isValidPath, setIsValidPath] = useState<boolean | null>(null);
-  const { siderCollapsed, setSiderCollapsed } = useResponsiveSider();
   const { mode } = useContext(ColorModeContext);
 
   // Check if the path is valid for authenticated routes
@@ -43,8 +41,6 @@ export default function AuthenticatedLayout({
         <div style={{ display: "flex", flexGrow: 1 }}>
           <AntdLayout style={{ display: "flex" }}>
             <Sider
-              siderCollapsed={siderCollapsed}
-              setSiderCollapsed={setSiderCollapsed}
               Title={(titleProps) => (
                 <ThemedTitleV2
                   {...titleProps}

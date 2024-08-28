@@ -40,6 +40,19 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
   const [currentPath, setCurrentPath] = useState("");
   const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
   const [footerVisible, setFooterVisible] = useState(false);
+  const [isDesktop, setIsDesktop] = useState<boolean>(true);
+
+  useEffect(() => {
+        const handleResize = () => {
+          const isDesktopView = window.innerWidth > 991;
+          setIsDesktop(isDesktopView);
+        };
+    
+        window.addEventListener("resize", handleResize);
+        handleResize();
+    
+        return () => window.removeEventListener("resize", handleResize);
+      }, [siderCollapsed]);
 
   useEffect(() => {
     if (!siderCollapsed) {
@@ -178,8 +191,8 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
         color: token.colorTextSecondary,
         borderTop: `1px solid ${token.colorBorderSecondary}`,
         marginTop: "16px",
-        opacity: footerVisible ? 1 : 0,
-        transition: "opacity 0.3s ease",
+        opacity: isDesktop ? (footerVisible ? 1 : 0) : undefined,
+        transition: "opacity 0.3s ease", 
       }}
     >
       <a
@@ -376,7 +389,7 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
         <div
           style={{ display: "flex", flexDirection: "column", height: "100%" }}
         >
-          <div style={{ flex: 1, overflow: "auto" }}>{renderMenu()}</div>
+          <div style={{ flex: 1}}>{renderMenu()}</div>
 
           {!siderCollapsed && (
             <div style={{ marginBottom: "60px" }}>{renderFooter()}</div>

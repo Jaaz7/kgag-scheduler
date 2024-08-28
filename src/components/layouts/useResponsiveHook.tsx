@@ -1,20 +1,20 @@
-import { useEffect, useState } from "react";
+// import { useEffect, useState } from "react";
 
-export const useResponsiveSider = () => {
-  const [siderCollapsed, setSiderCollapsed] = useState(true);
-  const [isDesktop, setIsDesktop] = useState<boolean>(true);
+// export const useResponsiveSider = () => {
+//   const [siderCollapsed, setSiderCollapsed] = useState(true);
+//   const [isDesktop, setIsDesktop] = useState<boolean>(true);
 
-  useEffect(() => {
-    const handleResize = () => {
-      const isDesktopView = window.innerWidth > 991;
-      setIsDesktop(isDesktopView);
-    };
+//   useEffect(() => {
+//     const handleResize = () => {
+//       const isDesktopView = window.innerWidth > 991;
+//       setIsDesktop(isDesktopView);
+//     };
 
-    window.addEventListener("resize", handleResize);
-    handleResize();
+//     window.addEventListener("resize", handleResize);
+//     handleResize();
 
-    return () => window.removeEventListener("resize", handleResize);
-  }, [siderCollapsed]);
+//     return () => window.removeEventListener("resize", handleResize);
+//   }, [siderCollapsed]);
 
-  return { siderCollapsed, setSiderCollapsed, isDesktop };
-};
+//   return { siderCollapsed, setSiderCollapsed, isDesktop };
+// };
