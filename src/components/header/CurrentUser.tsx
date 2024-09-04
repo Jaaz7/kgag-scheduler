@@ -12,21 +12,6 @@ const CurrentUser = () => {
   const [user, setUser] = useState<any | null>(null);
   const [initials, setInitials] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [accountSettingsData, setAccountSettingsData] = useState<any | null>(
-    null
-  );
-  const [isSettingsLoaded, setIsSettingsLoaded] = useState(false);
-
-  const CACHE_DURATION = 24 * 60 * 60 * 1000; // 1 day in milliseconds
-
-  const isUrlExpired = (expiryTimestamp: number) => {
-    return Date.now() > expiryTimestamp;
-  };
-
-  const preloadImage = (url: string) => {
-    const img = new Image();
-    img.src = url;
-  };
 
   // Fetch authenticated user and their profile data from Supabase
   const fetchUser = async () => {
@@ -53,20 +38,12 @@ const CurrentUser = () => {
 
       setInitials(getNameInitials(fullName));
 
-      const cachedAvatarData = localStorage.getItem("avatarUrlCache");
-      if (cachedAvatarData) {
-        const { signedUrl, expiry } = JSON.parse(cachedAvatarData);
-        setAvatarUrl(signedUrl);
-        preloadImage(signedUrl);
-
-        if (!isUrlExpired(expiry)) {
-          return;
-        } else {
-          localStorage.removeItem("avatarUrlCache");
-        }
+      // Fetch the signed avatar URL each time
+      if (profileData.avatar_url) {
+        await fetchSignedUrl(profileData.avatar_url);
+      } else {
+        setAvatarUrl(null);
       }
-
-      fetchSignedUrl(profileData.avatar_url);
     } catch (error) {
       console.error(
         "Error fetching user:",
@@ -75,45 +52,32 @@ const CurrentUser = () => {
     }
   };
 
-  // Fetch signed avatar URL, updating cache and state
-  const fetchSignedUrl = async (
-    avatarUrl: string | null,
-    isBackground = false
-  ) => {
+  // Fetch signed avatar URL, updating state
+  const fetchSignedUrl = async (avatarUrl: string | null) => {
     if (avatarUrl) {
       try {
         const { data: signedUrlData, error: signedUrlError } =
           await supabaseBrowserClient.storage
             .from("avatars")
-            .createSignedUrl(avatarUrl, CACHE_DURATION / 1000);
+            .createSignedUrl(avatarUrl, 60); // Signed URL valid for 60 seconds
         if (signedUrlError) throw new Error(signedUrlError.message);
 
         const newSignedUrl = signedUrlData?.signedUrl || null;
 
-        if (!isBackground) {
-          setAvatarUrl(newSignedUrl);
-        }
-
-        localStorage.setItem(
-          "avatarUrlCache",
-          JSON.stringify({
-            signedUrl: newSignedUrl,
-            expiry: Date.now() + CACHE_DURATION,
-          })
-        );
-
         if (newSignedUrl) {
-          preloadImage(newSignedUrl);
+          setAvatarUrl(newSignedUrl);
+        } else {
+          setAvatarUrl(null);
         }
       } catch (error) {
         console.error(
           "Error fetching signed URL:",
           error instanceof Error ? error.message : error
         );
+        setAvatarUrl(null);
       }
     } else {
       setAvatarUrl(null);
-      localStorage.removeItem("avatarUrlCache");
     }
   };
 
@@ -146,14 +110,13 @@ const CurrentUser = () => {
 
   const handleAvatarUpdate = (newAvatarUrl: string | null) => {
     setAvatarUrl(newAvatarUrl);
-    localStorage.removeItem("avatarUrlCache");
     fetchSignedUrl(newAvatarUrl);
   };
 
   const content = (
     <div style={{ display: "flex", flexDirection: "column" }}>
-      <Text strong style={{ padding: "12px 20px" }}>
-        {user?.email}
+      <Text strong style={{ padding: "12px", textAlign: "center" }}>
+        {user?.name}
       </Text>
       <div
         style={{
@@ -206,8 +169,6 @@ const CurrentUser = () => {
           setOpened={setIsOpen}
           userId={user.user_id}
           onAvatarUpdate={handleAvatarUpdate}
-          preloadedData={accountSettingsData}
-          isSettingsLoaded={isSettingsLoaded}
         />
       )}
     </>

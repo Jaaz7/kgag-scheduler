@@ -15,7 +15,7 @@ export async function updateSession(request: NextRequest) {
 
   if (session) {
     return NextResponse.next();
-  } else if (url.pathname !== "/" && url.pathname !== "/login") {
+  } else if (url.pathname !== "/") {
     url.pathname = "/";
     return NextResponse.redirect(url);
   }

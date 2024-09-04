@@ -22,3 +22,50 @@ body {
     transform: scale(1);
   }
 }
+
+html body .ant-layout-sider-trigger {
+  background-color: var(--sider-trigger-bg) !important;
+}
+
+
+.schedule-header {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.time-header {
+  text-align: center;
+  font-weight: bold;
+}
+
+.day-column {
+  font-weight: bold;
+  color: #108ee9;
+}
+
+.time-slot {
+  border: 1px solid #f0f0f0;
+  height: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.time-slot:hover {
+  background-color: #e6f7ff;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+}
+
+.button-group {
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.navigation-buttons {
+  margin-top: 10px;
+  text-align: center;
+}
+

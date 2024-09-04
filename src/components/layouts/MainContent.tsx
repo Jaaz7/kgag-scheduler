@@ -1,4 +1,5 @@
-import React, { ReactNode } from "react";
+import { Spin } from "antd";
+import React, { ReactNode, useEffect, useState } from "react";
 
 interface MainContentProps {
   children: ReactNode;
@@ -6,6 +7,30 @@ interface MainContentProps {
 }
 
 export const MainContent: React.FC<MainContentProps> = ({ children, mode }) => {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
+        <Spin size="large" />
+      </div>
+    );
+  }
   return (
     <div
       style={{

@@ -1,10 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
 import { Spin } from "antd";
-import { ScheduleGrid } from "@/components/common/CalendarUser";
+import React, { useEffect, useState } from "react";
 
-export default function ScheduleHBPage() {
+export default function ScheduleAdminPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -40,6 +39,10 @@ export default function ScheduleHBPage() {
       </div>
     );
   }
-
-  return <ScheduleGrid />;
+  return (
+    <div>
+      <h1>Schedule Admin Page</h1>
+      <h3>Only Admins should see this.</h3>
+    </div>
+  );
 }

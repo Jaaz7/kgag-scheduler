@@ -1,21 +1,23 @@
 "use client";
 
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState, useContext, useRef } from "react";
 import {
   Button,
   Checkbox,
   Form,
   Grid,
-  Input,
   message,
   theme,
   Typography,
   Switch,
+  Spin,
+  Input,
 } from "antd";
 import { LockOutlined, MailOutlined } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
-import { authProviderClient } from "@/lib/auth-provider";
+import { authProviderClient, CustomCheckResponse } from "@/lib/auth-provider";
 import { ColorModeContext } from "@/contexts/ColorModeContext";
+import { getDefaultRedirect } from "@components/common/redirect";
 
 const { useToken } = theme;
 const { useBreakpoint } = Grid;
@@ -28,40 +30,60 @@ export default function LoginPage() {
   const router = useRouter();
   const { mode, setMode } = useContext(ColorModeContext);
   const [loading, setLoading] = useState(true);
+  const [loggingIn, setLoggingIn] = useState(false);
+  const [userType, setUserType] = useState<string | undefined>();
+  const [scheduleId, setScheduleId] = useState<string | undefined>();
 
   useEffect(() => {
     const storedEmail = localStorage.getItem("rememberedEmail");
     if (storedEmail) {
       form.setFieldsValue({ email: storedEmail });
     }
-
     const checkAuth = async () => {
-      const response = await authProviderClient.check();
+      const response =
+        (await authProviderClient.check()) as CustomCheckResponse;
       if (response.authenticated) {
-        router.push("/schedule-hb");
+        setUserType(response.user_type);
+        setScheduleId(response.schedule_id);
+        const redirectTo = getDefaultRedirect(
+          response.user_type,
+          response.schedule_id
+        );
+        router.push(redirectTo);
       } else {
+        router.push("/");
         setLoading(false);
       }
     };
-
     checkAuth();
   }, [router, form]);
 
   const onFinish = async (values: any) => {
+    setLoggingIn(true);
     const { email, password, remember } = values;
 
     const response = await authProviderClient.login({ email, password });
 
     if (response.success) {
+      localStorage.setItem("lastLoginTime", Date.now().toString());
       if (remember) {
         localStorage.setItem("rememberedEmail", email);
       } else {
         localStorage.removeItem("rememberedEmail");
       }
-      router.push("/schedule-hb");
+
+      const checkResponse =
+        (await authProviderClient.check()) as CustomCheckResponse;
+      const redirectTo = getDefaultRedirect(
+        checkResponse.user_type,
+        checkResponse.schedule_id
+      );
+
+      router.push(redirectTo);
     } else {
       message.error("Login failed. Please check your email and password.");
       form.setFieldsValue({ password: "" });
+      setLoggingIn(false);
     }
   };
 
@@ -102,8 +124,19 @@ export default function LoginPage() {
     },
   };
 
-  if (loading) {
-    return null;
+  if (loading || loggingIn) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
+        <Spin size="large" />
+      </div>
+    );
   }
 
   return (
@@ -155,7 +188,7 @@ export default function LoginPage() {
               },
             ]}
           >
-            <Input prefix={<MailOutlined />} placeholder="Email" />
+            <Input prefix={<MailOutlined />} placeholder="Email" allowClear />
           </Form.Item>
           <Form.Item
             name="password"

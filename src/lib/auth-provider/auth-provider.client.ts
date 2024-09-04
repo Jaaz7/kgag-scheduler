@@ -1,8 +1,17 @@
 "use client";
 
-import type { AuthProvider, AuthActionResponse } from "@refinedev/core";
+import type {
+  AuthProvider,
+  AuthActionResponse,
+  CheckResponse,
+} from "@refinedev/core";
 import { supabaseBrowserClient } from "@/lib/supabase/client";
+import { getDefaultRedirect } from "@components/common/redirect";
 
+export interface CustomCheckResponse extends CheckResponse {
+  user_type?: string;
+  schedule_id?: string;
+}
 export const authProviderClient: AuthProvider = {
   login: async ({ email, password }): Promise<AuthActionResponse> => {
     try {
@@ -21,9 +30,28 @@ export const authProviderClient: AuthProvider = {
       }
 
       if (data?.session) {
+        const { data: profileData, error: profileError } =
+          await supabaseBrowserClient
+            .from("profiles")
+            .select("user_type, schedule_id")
+            .eq("user_id", data.session.user.id)
+            .single();
+
+        if (profileError || !profileData) {
+          console.error("Error fetching profile:", profileError?.message);
+          return {
+            success: false,
+            error: new Error("Failed to fetch user profile."),
+          };
+        }
+
+        const redirectTo = getDefaultRedirect(
+          profileData.user_type,
+          profileData.schedule_id
+        );
         return {
           success: true,
-          redirectTo: "/schedule-hb",
+          redirectTo,
         };
       }
 
@@ -59,47 +87,12 @@ export const authProviderClient: AuthProvider = {
     };
   },
 
-  register: async ({ email, password }): Promise<AuthActionResponse> => {
-    try {
-      const { data, error } = await supabaseBrowserClient.auth.signUp({
-        email,
-        password,
-      });
-
-      if (error) {
-        console.error("Registration error:", error);
-        return {
-          success: false,
-          error: new Error("Registration failed. Please try again."),
-        };
-      }
-
-      if (data) {
-        return {
-          success: true,
-          redirectTo: "/schedule-hb",
-        };
-      }
-
-      return {
-        success: false,
-        error: new Error("Registration failed due to unknown reasons."),
-      };
-    } catch (err) {
-      console.error("Unexpected error during registration:", err);
-      return {
-        success: false,
-        error:
-          err instanceof Error ? err : new Error("An unknown error occurred"),
-      };
-    }
-  },
-
-  check: async () => {
+  check: async (): Promise<CustomCheckResponse> => {
     try {
       const { data, error } = await supabaseBrowserClient.auth.getUser();
 
       if (error || !data?.user) {
+        console.log("Auth check failed: No user found");
         return {
           authenticated: false,
           redirectTo: "/",
@@ -107,8 +100,31 @@ export const authProviderClient: AuthProvider = {
         };
       }
 
+      const { data: profileData, error: profileError } =
+        await supabaseBrowserClient
+          .from("profiles")
+          .select("user_type, schedule_id")
+          .eq("user_id", data.user.id)
+          .single();
+
+      if (profileError) {
+        console.error("Error fetching profile:", profileError.message);
+        return {
+          authenticated: false,
+          redirectTo: "/",
+          logout: true,
+        };
+      }
+
+      const { user_type, schedule_id } = profileData;
+
+      const redirectTo = getDefaultRedirect(user_type, schedule_id);
+
       return {
         authenticated: true,
+        user_type,
+        schedule_id,
+        redirectTo,
       };
     } catch (err) {
       console.error("Error during authentication check:", err);

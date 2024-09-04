@@ -1,6 +1,12 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
 import { Modal } from "antd";
 
 interface ModalConfig {
@@ -17,10 +23,8 @@ interface ModalContextType {
   isModalVisible: boolean;
 }
 
-// Create Modal Context with default values
 const ModalContext = createContext<ModalContextType | undefined>(undefined);
 
-// Provider Component
 export const ModalProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
@@ -28,19 +32,15 @@ export const ModalProvider: React.FC<{ children: ReactNode }> = ({
   const [modalConfig, setModalConfig] = useState<ModalConfig | null>(null);
   const [isMobile, setIsMobile] = useState(false);
 
-  // Check if the user is on a mobile device based on window width
   const handleResize = () => {
-    setIsMobile(window.innerWidth <= 768); // Example breakpoint for mobile
+    setIsMobile(window.innerWidth <= 768);
   };
 
   useEffect(() => {
-    // Set initial value
     handleResize();
 
-    // Update value on window resize
     window.addEventListener("resize", handleResize);
 
-    // Cleanup event listener on component unmount
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
@@ -60,7 +60,7 @@ export const ModalProvider: React.FC<{ children: ReactNode }> = ({
       {modalConfig && (
         <Modal
           title={modalConfig.title}
-          centered={isMobile} // Apply centered prop only on mobile
+          centered={isMobile}
           open={isModalVisible}
           onOk={() => {
             if (modalConfig.onOk) modalConfig.onOk();
@@ -77,7 +77,6 @@ export const ModalProvider: React.FC<{ children: ReactNode }> = ({
   );
 };
 
-// Custom Hook to Use Modal Context
 export const useModal = () => {
   const context = useContext(ModalContext);
   if (context === undefined) {

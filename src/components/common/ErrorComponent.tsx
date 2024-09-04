@@ -1,35 +1,53 @@
+"use client";
+
 import React, { useEffect, useState } from "react";
 import { useGo, useResource, useRouterType } from "@refinedev/core";
 import type { RefineErrorPageProps } from "@refinedev/ui-types";
 import { Button, Result, Typography, Space, Tooltip } from "antd";
 import { InfoCircleOutlined } from "@ant-design/icons";
-import { useNavigation, useTranslate } from "@refinedev/core";
+import { useTranslate } from "@refinedev/core";
+import { authProviderClient, CustomCheckResponse } from "@/lib/auth-provider";
+import { getDefaultRedirect } from "@components/common/redirect";
+import router from "next/router";
 
 export const ErrorComponent: React.FC<RefineErrorPageProps> = () => {
   const [errorMessage, setErrorMessage] = useState<string>();
+  const [redirectTo, setRedirectTo] = useState<string>("/");
   const translate = useTranslate();
-  const { push } = useNavigation();
   const go = useGo();
   const routerType = useRouterType();
 
-  const { resource, action } = useResource();
+  const { resource } = useResource();
 
   useEffect(() => {
-    if (resource) {
-      if (action) {
-        setErrorMessage(
-          translate(
-            "pages.error.info",
-            {
-              action: action,
-              resource: resource?.name,
-            },
-            `You may have forgotten to add the "${action}" component to "${resource?.name}" resource.`
-          )
+    const fetchUserData = async () => {
+      const response =
+        (await authProviderClient.check()) as CustomCheckResponse;
+
+      if (response.authenticated) {
+        const redirectPath = getDefaultRedirect(
+          response.user_type,
+          response.schedule_id
         );
+        setRedirectTo(redirectPath);
       }
+    };
+
+    fetchUserData();
+
+    if (resource) {
+      setErrorMessage(
+        translate(
+          "pages.error.info",
+          {
+            action: "",
+            resource: resource?.name,
+          },
+          `You may have forgotten to add a component to "${resource?.name}" resource.`
+        )
+      );
     }
-  }, [resource, action]);
+  }, [resource, translate]);
 
   return (
     <Result
@@ -50,13 +68,14 @@ export const ErrorComponent: React.FC<RefineErrorPageProps> = () => {
               </Tooltip>
             )}
           </Space>
+
           <Button
             type="primary"
             onClick={() => {
               if (routerType === "legacy") {
-                push("/schedule-hb");
+                router.push(redirectTo);
               } else {
-                go({ to: "/schedule-hb" });
+                go({ to: redirectTo });
               }
             }}
           >

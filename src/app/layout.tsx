@@ -9,7 +9,6 @@ import { ColorModeContextProvider } from "@contexts/ColorModeContext";
 import { authProviderClient } from "@/lib/auth-provider";
 import { dataProvider } from "@/lib/data-provider";
 import AuthWrapper from "@/components/layouts/AuthWrapper";
-import { resources } from "@/contexts/resources";
 import { App, Spin } from "antd";
 import { ModalProvider } from "@/contexts/ModalProvider";
 import "@/styles/globals.css";
@@ -55,7 +54,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                         authProvider={authProviderClient}
                         dataProvider={dataProvider}
                         notificationProvider={useNotificationProvider}
-                        resources={resources}
                         options={{
                           syncWithLocation: true,
                           warnWhenUnsavedChanges: true,

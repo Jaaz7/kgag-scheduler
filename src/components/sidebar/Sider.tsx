@@ -7,6 +7,8 @@ import {
   Grid,
   theme,
   ConfigProvider,
+  MenuProps,
+  Spin,
 } from "antd";
 import {
   UserOutlined,
@@ -24,10 +26,10 @@ import { ThemedTitleV2 } from "./ThemedTitle";
 import { useThemedLayoutContext } from "./UseThemeLayoutContext";
 import { useModal } from "@/contexts/ModalProvider";
 import { ColorModeContext } from "@/contexts/ColorModeContext";
+import { authProviderClient, CustomCheckResponse } from "@/lib/auth-provider";
 
 export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
   Title: TitleFromProps,
-  fixed,
 }) => {
   const { token } = theme.useToken();
   const {
@@ -41,18 +43,37 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
   const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
   const [footerVisible, setFooterVisible] = useState(false);
   const [isDesktop, setIsDesktop] = useState<boolean>(true);
+  const [userType, setUserType] = useState<string | undefined>();
+  const [scheduleId, setScheduleId] = useState<string | undefined>();
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-        const handleResize = () => {
-          const isDesktopView = window.innerWidth > 991;
-          setIsDesktop(isDesktopView);
-        };
-    
-        window.addEventListener("resize", handleResize);
-        handleResize();
-    
-        return () => window.removeEventListener("resize", handleResize);
-      }, [siderCollapsed]);
+    const fetchAuthData = async () => {
+      const authResponse: CustomCheckResponse =
+        await authProviderClient.check();
+
+      if (authResponse.authenticated) {
+        setUserType(authResponse.user_type);
+        setScheduleId(authResponse.schedule_id);
+      }
+
+      setLoading(false);
+    };
+
+    fetchAuthData();
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const isDesktopView = window.innerWidth > 991;
+      setIsDesktop(isDesktopView);
+    };
+
+    window.addEventListener("resize", handleResize);
+    handleResize();
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, [siderCollapsed]);
 
   useEffect(() => {
     if (!siderCollapsed) {
@@ -143,8 +164,43 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
     return <IconComponent {...iconProps} />;
   };
 
-  const items = [
-    {
+  const items: MenuProps["items"] = [];
+
+  if (userType === "admin" && scheduleId === "admin") {
+    items.push(
+      {
+        key: "schedule-admin",
+        icon: <CalendarOutlined />,
+        label: (
+          <Link to="/schedule-admin">
+            {translate("schedule-admin.title", "Admin-Diesntplan")}
+          </Link>
+        ),
+        style:
+          currentPath === "/schedule-admin"
+            ? {
+                backgroundColor: mode === "dark" ? "#40a9ff" : "#e6f7ff",
+                color: mode === "dark" ? "#fff" : token.colorPrimary,
+                borderColor: mode === "dark" ? "#40a9ff" : token.colorPrimary,
+              }
+            : {},
+      },
+      {
+        key: "manage-users",
+        icon: <UserOutlined />,
+        label: <Link to="/manage-users">Manage Users</Link>,
+        style:
+          currentPath === "/manage-users"
+            ? {
+                backgroundColor: mode === "dark" ? "#40a9ff" : "#e6f7ff",
+                color: mode === "dark" ? "#fff" : token.colorPrimary,
+                borderColor: mode === "dark" ? "#40a9ff" : token.colorPrimary,
+              }
+            : {},
+      }
+    );
+  } else if (userType === "standardbenutzer" && scheduleId === "hb-shop") {
+    items.push({
       key: "schedule",
       icon: <CalendarOutlined />,
       label: (
@@ -160,27 +216,15 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
               borderColor: mode === "dark" ? "#40a9ff" : token.colorPrimary,
             }
           : {},
-    },
-    {
-      key: "manage-users",
-      icon: <UserOutlined />,
-      label: <Link to="/manage-users">Manage Users</Link>,
-      style:
-        currentPath === "/manage-users"
-          ? {
-              backgroundColor: mode === "dark" ? "#40a9ff" : "#e6f7ff",
-              color: mode === "dark" ? "#fff" : token.colorPrimary,
-              borderColor: mode === "dark" ? "#40a9ff" : token.colorPrimary,
-            }
-          : {},
-    },
-    {
-      key: "logout",
-      icon: <LogoutOutlined />,
-      label: translate("buttons.logout", "Logout"),
-      onClick: handleLogoutClick,
-    },
-  ];
+    });
+  }
+
+  items.push({
+    key: "logout",
+    icon: <LogoutOutlined />,
+    label: translate("buttons.logout", "Logout"),
+    onClick: handleLogoutClick,
+  });
 
   const renderFooter = () => (
     <div
@@ -192,7 +236,7 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
         borderTop: `1px solid ${token.colorBorderSecondary}`,
         marginTop: "16px",
         opacity: isDesktop ? (footerVisible ? 1 : 0) : undefined,
-        transition: "opacity 0.3s ease", 
+        transition: "opacity 0.3s ease",
       }}
     >
       <a
@@ -325,19 +369,34 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
     overflow: "hidden",
   };
 
+  if (loading) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
+        <Spin size="large" />
+      </div>
+    );
+  }
+
   if (isMobile) {
     return renderDrawerSider();
   }
 
   return (
     <>
-      {(
+      {
         <div
           style={{
             width: siderCollapsed ? "80px" : "200px",
           }}
         />
-      )}
+      }
       <Layout.Sider
         style={siderStyles}
         collapsible
@@ -358,6 +417,7 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
               width: "100%",
               backgroundColor:
                 mode === "dark" ? "#2a2a2a" : token.colorBgContainer,
+                borderBlockColor: "transparent",
             }}
           >
             {renderClosingIcons()}
@@ -389,10 +449,10 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
         <div
           style={{ display: "flex", flexDirection: "column", height: "100%" }}
         >
-          <div style={{ flex: 1}}>{renderMenu()}</div>
+          <div style={{ flex: 1 }}>{renderMenu()}</div>
 
           {!siderCollapsed && (
-            <div style={{ marginBottom: "60px" }}>{renderFooter()}</div>
+            <div style={{ marginBottom: "55px" }}>{renderFooter()}</div>
           )}
         </div>
       </Layout.Sider>

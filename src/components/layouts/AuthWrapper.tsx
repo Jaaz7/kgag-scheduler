@@ -22,16 +22,16 @@ export default function AuthWrapper({
 
   useEffect(() => {
     const checkAuth = async () => {
-      const response = await authProviderClient.check();
-      setIsAuthenticated(response.authenticated);
-
-      if (!response.authenticated && pathname !== "/") {
-        router.push(response.redirectTo || "/");
+      try {
+        const response = await authProviderClient.check();
+        setIsAuthenticated(response.authenticated);
+      } catch (error) {
+        console.error("Error during authentication check:", error);
+        setIsAuthenticated(false);
+      } finally {
+        setInitialLoad(false);
       }
-
-      setInitialLoad(false);
     };
-
     checkAuth();
   }, [pathname, router]);
 

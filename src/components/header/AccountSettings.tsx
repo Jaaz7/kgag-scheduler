@@ -10,6 +10,7 @@ import {
   Checkbox,
   message,
   Spin,
+  App,
 } from "antd";
 import {
   UploadOutlined,
@@ -27,7 +28,6 @@ import Resizer from "react-image-file-resizer";
 import { isEqual } from "lodash";
 import { useModal } from "@/contexts/ModalProvider";
 import { ColorModeContext } from "@contexts/ColorModeContext";
-import { App } from "antd";
 import "@/styles/globals.css";
 
 const { Option } = Select;
@@ -89,6 +89,8 @@ export const AccountSettings = ({
         if (data.avatar_url) {
           const signedUrl = await fetchSignedAvatarUrl(data.avatar_url);
           setAvatarUrl(signedUrl);
+        } else {
+          setAvatarUrl(null); // Handle null or empty avatar_url by setting a default or placeholder
         }
 
         const initialData = {
@@ -165,35 +167,26 @@ export const AccountSettings = ({
   // Reset form and password fields when drawer is opened
   useEffect(() => {
     const resetFormAndData = async () => {
-      // Reset form fields
-      form.resetFields();
-  
-      // Reset password fields
-      setPassword("");
-      setConfirmPassword("");
-      setPasswordErrors([]);
-      setPasswordValid(false);
-      setPasswordsMatch(false);
-  
-      // Reset image and image preview
-      setSelectedFile(null);
-      setPreviewImage(null);
-  
-      // Optionally reset the avatar if required
-      if (data?.avatar_url) {
-        const signedUrl = await fetchSignedAvatarUrl(data.avatar_url);
-        setAvatarUrl(signedUrl);
-      } else {
-        setAvatarUrl(null);
+      if (opened && data) {
+        setPassword("");
+        setConfirmPassword("");
+        setPasswordErrors([]);
+        setPasswordValid(false);
+        setPasswordsMatch(false);
+        setSelectedFile(null);
+        setPreviewImage(null);
+
+        if (data?.avatar_url) {
+          const signedUrl = await fetchSignedAvatarUrl(data.avatar_url);
+          setAvatarUrl(signedUrl || null);
+        } else {
+          setAvatarUrl(null);
+        }
       }
     };
-  
-    if (opened) {
-      resetFormAndData();
-    }
-  }, [opened, form, data?.avatar_url]);
-  
-  
+
+    resetFormAndData();
+  }, [opened, form, data]);
 
   // Resize image to a smaller size for avatar upload
   const resizeImage = (file: File): Promise<Blob> => {
@@ -412,7 +405,7 @@ export const AccountSettings = ({
     });
   };
 
-  if (isLoading) {
+  if (isLoading || !initialValues) {
     return (
       <Drawer
         open={opened}
