@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { authProviderClient, CustomCheckResponse } from "@/lib/auth-provider";
-import { Spin } from "antd";
+import {
+  authProviderClient,
+  CustomCheckResponse,
+} from "@/lib/auth-provider/auth-provider.client";
 import NotFound from "@/app/not-found";
 
 interface UserTypeWrapperProps {
@@ -68,9 +70,7 @@ export default function UserTypeWrapper({ children }: UserTypeWrapperProps) {
           alignItems: "center",
           height: "100vh",
         }}
-      >
-        
-      </div>
+      ></div>
     );
   }
 

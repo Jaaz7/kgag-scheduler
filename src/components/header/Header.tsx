@@ -1,7 +1,6 @@
 import { useContext, useEffect } from "react";
 import { Layout, Space } from "antd";
 import { ColorModeContext } from "@contexts/ColorModeContext";
-import { useLayoutLoading } from "@contexts/LayoutLoadingContext";
 import CurrentUser from "./CurrentUser";
 import ThemeSwitcher from "@components/common/ThemeSwitcher";
 

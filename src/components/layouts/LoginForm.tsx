@@ -12,12 +12,17 @@ import {
   Switch,
   Spin,
   Input,
+  InputRef,
 } from "antd";
 import { LockOutlined, MailOutlined } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
-import { authProviderClient, CustomCheckResponse } from "@/lib/auth-provider";
+import {
+  authProviderClient,
+  CustomCheckResponse,
+} from "@/lib/auth-provider/auth-provider.client";
 import { ColorModeContext } from "@/contexts/ColorModeContext";
 import { getDefaultRedirect } from "@components/common/redirect";
+import { supabaseBrowserClient } from "@lib/supabase/client";
 
 const { useToken } = theme;
 const { useBreakpoint } = Grid;
@@ -33,22 +38,38 @@ export default function LoginPage() {
   const [loggingIn, setLoggingIn] = useState(false);
   const [userType, setUserType] = useState<string | undefined>();
   const [scheduleId, setScheduleId] = useState<string | undefined>();
+  const emailInputRef = useRef<InputRef>(null);
+  const passwordInputRef = useRef<InputRef>(null);
 
   useEffect(() => {
     const storedEmail = localStorage.getItem("rememberedEmail");
     if (storedEmail) {
       form.setFieldsValue({ email: storedEmail });
     }
+
+    setTimeout(() => {
+      const emailValue = form.getFieldValue("email");
+
+      if (emailValue && passwordInputRef.current) {
+        passwordInputRef.current.focus();
+      } else if (emailInputRef.current) {
+        emailInputRef.current.focus();
+      }
+    }, 50);
+
     const checkAuth = async () => {
       const response =
         (await authProviderClient.check()) as CustomCheckResponse;
+
       if (response.authenticated) {
         setUserType(response.user_type);
         setScheduleId(response.schedule_id);
+
         const redirectTo = getDefaultRedirect(
           response.user_type,
           response.schedule_id
         );
+
         router.push(redirectTo);
       } else {
         router.push("/");
@@ -72,17 +93,48 @@ export default function LoginPage() {
         localStorage.removeItem("rememberedEmail");
       }
 
-      const checkResponse =
-        (await authProviderClient.check()) as CustomCheckResponse;
-      const redirectTo = getDefaultRedirect(
-        checkResponse.user_type,
-        checkResponse.schedule_id
-      );
+      try {
+        const userResponse = await supabaseBrowserClient.auth.getUser();
+        const userId = userResponse.data.user?.id;
 
-      router.push(redirectTo);
+        if (userId) {
+          const { data: profileData, error: profileError } =
+            await supabaseBrowserClient
+              .from("profiles")
+              .select("name")
+              .eq("user_id", userId)
+              .single();
+
+          if (profileError || !profileData) {
+            console.error("Error fetching profile:", profileError?.message);
+            message.error(
+              "Login successful, but failed to retrieve user information."
+            );
+          } else {
+            const { name } = profileData;
+            message.success(`Willkommen, ${name || email}!`);
+          }
+        }
+
+        const checkResponse =
+          (await authProviderClient.check()) as CustomCheckResponse;
+        const redirectTo = getDefaultRedirect(
+          checkResponse.user_type,
+          checkResponse.schedule_id
+        );
+        router.push(redirectTo);
+      } catch (err) {
+        console.error("Error fetching user profile:", err);
+        message.error("An error occurred while fetching user profile.");
+      }
     } else {
       message.error("Login failed. Please check your email and password.");
       form.setFieldsValue({ password: "" });
+      setTimeout(() => {
+        if (passwordInputRef.current) {
+          passwordInputRef.current.focus();
+        }
+      }, 50);
       setLoggingIn(false);
     }
   };
@@ -188,7 +240,12 @@ export default function LoginPage() {
               },
             ]}
           >
-            <Input prefix={<MailOutlined />} placeholder="Email" allowClear />
+            <Input
+              ref={emailInputRef}
+              prefix={<MailOutlined />}
+              placeholder="Email"
+              allowClear
+            />
           </Form.Item>
           <Form.Item
             name="password"
@@ -200,6 +257,7 @@ export default function LoginPage() {
             ]}
           >
             <Input.Password
+              ref={passwordInputRef}
               prefix={<LockOutlined />}
               type="password"
               placeholder="Password"

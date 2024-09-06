@@ -26,7 +26,10 @@ import { ThemedTitleV2 } from "./ThemedTitle";
 import { useThemedLayoutContext } from "./UseThemeLayoutContext";
 import { useModal } from "@/contexts/ModalProvider";
 import { ColorModeContext } from "@/contexts/ColorModeContext";
-import { authProviderClient, CustomCheckResponse } from "@/lib/auth-provider";
+import {
+  authProviderClient,
+  CustomCheckResponse,
+} from "@/lib/auth-provider/auth-provider.client";
 
 export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
   Title: TitleFromProps,
@@ -417,7 +420,7 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
               width: "100%",
               backgroundColor:
                 mode === "dark" ? "#2a2a2a" : token.colorBgContainer,
-                borderBlockColor: "transparent",
+              borderBlockColor: "transparent",
             }}
           >
             {renderClosingIcons()}

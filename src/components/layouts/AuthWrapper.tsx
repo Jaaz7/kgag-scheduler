@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import AuthenticatedLayout from "./AuthenticatedLayout";
 import UnauthenticatedLayout from "./UnauthenticatedLayout";
 import { Spin } from "antd";
-import { authProviderClient } from "@/lib/auth-provider";
+import { authProviderClient } from "@/lib/auth-provider/auth-provider.client";
 import { ColorModeContext } from "@/contexts/ColorModeContext";
 
 export default function AuthWrapper({

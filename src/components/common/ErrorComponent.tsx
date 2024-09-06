@@ -6,7 +6,7 @@ import type { RefineErrorPageProps } from "@refinedev/ui-types";
 import { Button, Result, Typography, Space, Tooltip } from "antd";
 import { InfoCircleOutlined } from "@ant-design/icons";
 import { useTranslate } from "@refinedev/core";
-import { authProviderClient, CustomCheckResponse } from "@/lib/auth-provider";
+import { authProviderClient, CustomCheckResponse } from "@/lib/auth-provider/auth-provider.client";
 import { getDefaultRedirect } from "@components/common/redirect";
 import router from "next/router";
 

@@ -6,7 +6,7 @@ import { RefineKbar, RefineKbarProvider } from "@refinedev/kbar";
 import routerProvider from "@refinedev/nextjs-router";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
 import { ColorModeContextProvider } from "@contexts/ColorModeContext";
-import { authProviderClient } from "@/lib/auth-provider";
+import { authProviderClient } from "@/lib/auth-provider/auth-provider.client";
 import { dataProvider } from "@/lib/data-provider";
 import AuthWrapper from "@/components/layouts/AuthWrapper";
 import { App, Spin } from "antd";

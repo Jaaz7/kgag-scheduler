@@ -17,7 +17,7 @@ export default function ScheduleHBPage() {
       if (timeDiff < 2000) {
         setTimeout(() => {
           setLoading(false);
-        }, 300);
+        }, 400);
       } else {
         setLoading(false);
       }
