@@ -33,7 +33,7 @@ export const ModalProvider: React.FC<{ children: ReactNode }> = ({
   const [isMobile, setIsMobile] = useState(false);
 
   const handleResize = () => {
-    setIsMobile(window.innerWidth <= 768);
+    setIsMobile(window.innerWidth <= 900);
   };
 
   useEffect(() => {

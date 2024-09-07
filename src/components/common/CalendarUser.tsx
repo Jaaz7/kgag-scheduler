@@ -100,8 +100,8 @@ const getAllWeeksInMonth = (selectedMonth: number, currentYear: number) => {
 };
 
 export const ScheduleGrid: React.FC = () => {
-  const breakpoint = Grid.useBreakpoint();
-  const isMobile = !breakpoint.lg;
+  // Use States and Variables-----------------------------------------
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 900);
   const currentMonth = dayjs().month();
   const [viewType, setViewType] = useState("week");
   const [selectedMonth, setSelectedMonth] = useState(dayjs().month());
@@ -118,6 +118,18 @@ export const ScheduleGrid: React.FC = () => {
   const [isAnimating, setIsAnimating] = useState(false);
   const monthsData = getAdjacentMonths(currentMonth, currentYear);
   const [disableTransition, setDisableTransition] = useState(false);
+  const [hoveredDayIndex, setHoveredDayIndex] = useState<number | null>(null);
+
+  // Helper Functions---------------------------------------------------
+
+  const handleMouseEnter = (index: number) => {
+    setHoveredDayIndex(index);
+  };
+
+  // Function to handle mouse leave
+  const handleMouseLeave = () => {
+    setHoveredDayIndex(null);
+  };
 
   const handleMonthChange = (value: number) => {
     setSelectedMonth(value);
@@ -149,7 +161,7 @@ export const ScheduleGrid: React.FC = () => {
       setIsAnimating(false);
     }, 0);
   };
-
+  // UseEffect-----------------------------------------------------------
   useEffect(() => {
     const newTotalWeeks = getWeeksInMonth(selectedMonth, currentYear);
     setTotalWeeks(newTotalWeeks);
@@ -161,6 +173,22 @@ export const ScheduleGrid: React.FC = () => {
     setViewType(e.target.value);
   };
 
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 900);
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    // Initial check
+    handleResize();
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
+  // Render Mobile Schedule---------------------------------------------
   const renderMobile = () => (
     <div className="mobile-schedule">
       {/* Sticky Header */}
@@ -222,47 +250,53 @@ export const ScheduleGrid: React.FC = () => {
           const isLeakedDay = date.month() !== selectedMonth;
 
           return (
-            <div key={index} className="mobile-day-mobile">
-              <div className="day-date-container">
-                <span
-                  className={
-                    isLeakedDay ? "leaked-day-span-mobile" : "day-span-mobile"
-                  }
-                >
-                  {fullDays[(date.day() + 6) % 7]}
-                </span>
-                <span
-                  className={
-                    isLeakedDay ? "leaked-date-span-mobile" : "date-span-mobile"
-                  }
-                >
-                  {date.format("DD")}
-                </span>
-              </div>
-              {/* Row with two columns: First column for shift timers, second for time slots */}
-              <Row gutter={16}>
-                {/* First Column: Shift Timers */}
-                <Col span={4} className="shift-timer-column-mobile">
-                  {timeslots.map((slot, timeIndex) => (
-                    <div key={timeIndex} className="shift-timer-mobile">
-                      {slot}
-                    </div>
-                  ))}
+            <div key={index} className="mobile-day">
+              {/* Row with day-date-container */}
+              <Row gutter={16} align="middle">
+                <Col span={24}>
+                  <div className="day-date-container">
+                    <span
+                      className={
+                        isLeakedDay
+                          ? "leaked-day-span-mobile"
+                          : "day-span-mobile"
+                      }
+                    >
+                      {fullDays[(date.day() + 6) % 7]}
+                    </span>
+                    <span
+                      className={
+                        isLeakedDay
+                          ? "leaked-date-span-mobile"
+                          : "date-span-mobile"
+                      }
+                    >
+                      {date.format("DD")}
+                    </span>
+                  </div>
                 </Col>
+              </Row>
 
-                {/* Second Column: Time Slots */}
-                <Col span={20} className="time-slots-column-mobile">
-                  {timeslots.map((_, timeIndex) => (
+              {/* Row with time slots, each with a shift timer above it */}
+              <Row gutter={16} align="top">
+                {timeslots.map((slot, timeIndex) => (
+                  <Col
+                    key={timeIndex}
+                    span={24}
+                    className="time-slot-container-mobile"
+                  >
+                    {/* Shift Timer (above the slot) */}
+                    <div className="shift-timer-mobile">{slot}</div>
+                    {/* Time Slot */}
                     <div
-                      key={timeIndex}
                       className={`time-slot-mobile ${
                         isToday ? "current-slot-mobile" : ""
                       } ${isLeakedDay ? "leaked-day-mobile" : ""}`}
                     >
                       Slot {timeIndex + 1}
                     </div>
-                  ))}
-                </Col>
+                  </Col>
+                ))}
               </Row>
             </div>
           );
@@ -275,6 +309,7 @@ export const ScheduleGrid: React.FC = () => {
     return renderMobile();
   }
 
+  // Render Desktop Schedule-----------------------------------------
   return (
     <div className="schedule-grid">
       {/* Header: Year, Month, View Type Switch */}
@@ -315,7 +350,7 @@ export const ScheduleGrid: React.FC = () => {
       </Row>
 
       {/* Time Slots Header */}
-      <Row gutter={16} className="time-header">
+      <Row gutter={50} className="time-header">
         <Col span={2}></Col>
         {timeslots.map((slot) => (
           <Col span={7} key={slot}>
@@ -344,8 +379,20 @@ export const ScheduleGrid: React.FC = () => {
               const isToday = date.isSame(today, "day");
 
               return (
-                <Row gutter={16} key={index} className="main-schedule-row">
-                  <Col span={2} className="day-column">
+                <Row gutter={50} key={index} className="main-schedule-row">
+                  {/* Day Column */}
+                  <Col
+                    span={2}
+                    className={`day-column ${
+                      isLeakedDay
+                        ? "leaked-day-column"
+                        : isToday && hoveredDayIndex === index
+                        ? "current-slot-hover"
+                        : hoveredDayIndex === index
+                        ? "hovered"
+                        : ""
+                    }`}
+                  >
                     <div>
                       <span
                         className={
@@ -363,13 +410,20 @@ export const ScheduleGrid: React.FC = () => {
                     </div>
                   </Col>
 
+                  {/* Time Slots */}
                   {timeslots.map((_, timeIndex) => (
                     <Col
                       span={7}
                       key={timeIndex}
                       className={`time-slot ${
-                        isLeakedDay ? "leaked-day" : ""
-                      } ${isToday ? "current-slot" : ""}`}
+                        hoveredDayIndex === index && !isLeakedDay
+                          ? "hovered"
+                          : ""
+                      } ${isLeakedDay ? "leaked-day" : ""} ${
+                        isToday ? "current-slot" : ""
+                      }`}
+                      onMouseEnter={() => handleMouseEnter(index)}
+                      onMouseLeave={handleMouseLeave}
                     >
                       Week {weekIndex + 1}, {days[index]}, Slot {timeIndex + 1}
                     </Col>

@@ -68,7 +68,7 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
 
   useEffect(() => {
     const handleResize = () => {
-      const isDesktopView = window.innerWidth > 991;
+      const isDesktopView = window.innerWidth > 900;
       setIsDesktop(isDesktopView);
     };
 
@@ -129,8 +129,7 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
   const translate = useTranslate();
   const Link = useLink();
   const { mutate: mutateLogout } = useLogout();
-  const breakpoint = Grid.useBreakpoint();
-  const isMobile = !breakpoint.lg;
+  const isMobile = window.innerWidth <= 900;
   const RenderToTitle = TitleFromProps ?? ThemedTitleV2;
   const { showModal } = useModal();
   const { mode } = useContext(ColorModeContext);
@@ -236,7 +235,6 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
         textAlign: "center",
         fontSize: isMobile ? "10px" : "11px",
         color: token.colorTextSecondary,
-        borderTop: `1px solid ${token.colorBorderSecondary}`,
         marginTop: "16px",
         opacity: isDesktop ? (footerVisible ? 1 : 0) : undefined,
         transition: "opacity 0.3s ease",
@@ -410,7 +408,6 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
           }
         }}
         collapsedWidth={80}
-        breakpoint="lg"
         trigger={
           <Button
             type="text"

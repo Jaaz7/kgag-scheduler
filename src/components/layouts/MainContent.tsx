@@ -6,8 +6,11 @@ interface MainContentProps {
   mode: string;
 }
 
+const isMobile = () => window.innerWidth <= 900;
+
 export const MainContent: React.FC<MainContentProps> = ({ children, mode }) => {
   const [loading, setLoading] = useState(true);
+  const [paddingValue, setPaddingValue] = useState(isMobile() ? "0px" : "12px");
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -15,6 +18,21 @@ export const MainContent: React.FC<MainContentProps> = ({ children, mode }) => {
     }, 300);
 
     return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setPaddingValue(isMobile() ? "0px" : "12px");
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    // Initial check
+    handleResize();
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
   }, []);
 
   if (loading) {
@@ -35,7 +53,7 @@ export const MainContent: React.FC<MainContentProps> = ({ children, mode }) => {
     <div
       style={{
         flexGrow: 1,
-        padding: "12px",
+        padding: paddingValue,
         overflowY: "auto",
         backgroundColor: mode === "dark" ? "#141414" : "#f5f5f5",
         display: "flex",

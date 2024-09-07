@@ -50,7 +50,6 @@ html body .ant-layout-sider-trigger {
 }
 
 .main-schedule-row {
-  margin-top: 5px;
   align-items: center;
   display: flex;
   flex-wrap: wrap;
@@ -59,6 +58,17 @@ html body .ant-layout-sider-trigger {
 .day-column {
   color: #000000;
   font-size: 15px !important;
+  transition: ease-in-out 0.2s;
+}
+
+.day-column.hovered {
+  border-top: 2px solid rgb(207, 213, 218);
+  margin-top: -13px;
+}
+
+.day-column.current-slot-hover {
+  border-top: 2px solid rgb(12, 153, 235); /* Blue border for current-slot hover */
+  margin-top: -13px;
 }
 
 .day-span {
@@ -67,30 +77,28 @@ html body .ant-layout-sider-trigger {
 }
 
 :root {
-  --border-style-right: 0.5px solid rgba(219, 208, 208, 0.81);
+  --border-style-right: 1px solid rgb(239, 230, 230);
   --border-style-top: 2px solid rgb(207, 213, 218);
   --border-style-top-current-slot: 2px solid rgb(57, 142, 216);
   --border-style-top-hover: 2px solid rgb(165, 165, 165);
 }
 
 .time-slot {
+  width: 100%;
   border-top: var(--border-style-top);
-  border-right: var(--border-style-right);
   height: 70px;
   display: flex;
   justify-content: center;
   align-items: center;
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  border-radius: 5px;
 }
 
-/* .time-slot:last-child {
-  border-right: var(--border-style);
-} */
+.time-slot:not(:last-child) {
+  border-right: var(--border-style-right);
+}
 
 .time-slot:hover {
   background-color: #eeeeee;
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
   border-top: var(--border-style-top-hover);
   cursor: pointer;
 }
@@ -122,9 +130,11 @@ html body .ant-layout-sider-trigger {
   visibility: visible;
   opacity: 1;
 }
+
 .leaked-day {
   background-color: rgba(217, 217, 217, 0.5);
   color: #999;
+  pointer-events: none;
 }
 
 .leaked-day-span-number {
@@ -141,7 +151,6 @@ html body .ant-layout-sider-trigger {
   color: #999;
   border-top: var(--border-style-top);
   box-shadow: none;
-  cursor: default;
 }
 
 .current-slot {
@@ -149,30 +158,33 @@ html body .ant-layout-sider-trigger {
   color: rgb(12, 153, 235);
   border-top: var(--border-style-top-current-slot);
 }
+
 .current-slot:hover {
   background-color: rgba(162, 215, 255, 0.333);
   box-shadow: none;
   border-top: var(--border-style-top-current-slot);
 }
 
+--------------------------------------------------------------------------
 /* Styles for mobile */
-
+.schedule-header-mobile,
+.navigation-buttons-mobile,
+.week-title-mobile {
+  flex-shrink: 0;
+}
 .mobile-schedule {
   display: flex;
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
-  padding: 10px;
   text-align: center;
   background-color: #fff;
   border-radius: 10px;
-  padding: 5px;
 }
 
 .schedule-header-mobile {
   justify-content: center;
   background-color: #fff;
-  padding-bottom: 10px;
   position: sticky;
   top: 0;
   z-index: 10;
@@ -180,17 +192,17 @@ html body .ant-layout-sider-trigger {
 }
 
 .week-title-mobile {
-  position: sticky;
+  text-align: center;
   z-index: 10;
   background-color: #fff;
-  padding: 5px 0;
-  margin: 0;
+  margin-bottom: 0 !important;
 }
 .navigation-buttons-mobile {
   position: sticky;
   z-index: 10;
   background-color: #fff;
   text-align: center;
+  padding: 15px;
 }
 
 .week-container-mobile {
@@ -199,22 +211,25 @@ html body .ant-layout-sider-trigger {
   display: flex;
   flex-direction: column;
   transition: transform 0.3s ease-in-out;
-  overflow-y: auto;
-  padding-bottom: 75px;
+  padding: 15px;
+  min-height: 0;
+  background: #fff;
 }
 
 .week-container-mobile.active {
   visibility: visible;
   opacity: 1;
 }
+
 .leaked-day-mobile {
   background-color: rgba(217, 217, 217, 0.5);
   color: #999;
 }
 
-.mobile-day-mobile {
-  border-bottom: 1px solid #ddd;
+.mobile-day {
+  background-color: #fff;
   flex-shrink: 0;
+  padding: 5px;
 }
 
 .day-date-container {
@@ -222,11 +237,9 @@ html body .ant-layout-sider-trigger {
   justify-content: center;
   align-items: center;
   font-weight: bold;
-  margin-top: 10px;
 }
 
 .main-schedule-row-mobile {
-  margin-top: 5px;
   align-items: center;
   display: flex;
   flex-wrap: wrap;
@@ -268,17 +281,11 @@ html body .ant-layout-sider-trigger {
   --border-style-top-mobile-current-slot: 1px solid rgb(88, 158, 220);
 }
 .time-slot-mobile {
-  border-top: var(--border-style-top-mobile);
-  height: 40px;
+  height: 50px;
   display: flex;
   justify-content: center;
   align-items: center;
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  border-radius: 5px;
-}
-
-.time-slot-mobile:last-child {
-  border-bottom: var(--border-style-bottom-mobile);
 }
 
 .current-slot-mobile {
@@ -287,17 +294,10 @@ html body .ant-layout-sider-trigger {
   border-top: var(--border-style-top-mobile-current-slot);
 }
 
-.shift-timer-column-mobile {
-  font-size: 14px;
-  text-align: left;
+.shift-timer-mobile {
+  font-weight: bold;
 }
 
-.time-slots-column-mobile {
-  display: flex;
-  flex-direction: column;
-}
-
-.time-slot-mobile {
-  padding: 5px;
-  border: 1px solid #ccc;
+.shift-timer-mobile {
+  border-top: var(--border-style-top-mobile);
 }
