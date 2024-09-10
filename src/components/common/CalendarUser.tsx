@@ -1,13 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { Grid, Row, Col, Button, Typography, Select, Radio } from "antd";
+import { Row, Col, Button, Typography, Select, Radio } from "antd";
 import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 import dayjs, { Dayjs } from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 import weekOfYear from "dayjs/plugin/weekOfYear";
 import isoWeek from "dayjs/plugin/isoWeek";
 
 dayjs.extend(weekOfYear);
 dayjs.extend(isoWeek);
-const today = dayjs();
+dayjs.extend(utc);
+dayjs.extend(timezone);
+const today = dayjs().tz("Europe/Berlin");
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -43,9 +47,11 @@ const months = [
 
 const getWeeksInMonth = (month: number, year: number) => {
   const startOfMonth = dayjs(`${year}-${month + 1}-01`)
+    .tz("Europe/Berlin")
     .startOf("month")
     .startOf("isoWeek");
   const endOfMonth = dayjs(`${year}-${month + 1}-01`)
+    .tz("Europe/Berlin")
     .endOf("month")
     .endOf("isoWeek");
 
@@ -224,25 +230,6 @@ export const ScheduleGrid: React.FC = () => {
         </Col>
       </Row>
 
-      {/* Sticky Navigation Buttons */}
-      <div className="navigation-buttons-mobile">
-        <Button
-          icon={<LeftOutlined />}
-          onClick={() => handleWeekChange("left")}
-          disabled={currentWeek === 1}
-        />
-        <Button
-          icon={<RightOutlined />}
-          onClick={() => handleWeekChange("right")}
-          disabled={currentWeek === totalWeeks}
-        />
-      </div>
-
-      {/* Sticky Week Title */}
-      <Title className="week-title-mobile" level={4}>
-        Woche {currentWeek}
-      </Title>
-
       {/* Scrollable Week Container */}
       <div className="week-container-mobile">
         {allWeeks[currentWeek - 1].map((date: Dayjs, index: number) => {
@@ -277,7 +264,7 @@ export const ScheduleGrid: React.FC = () => {
                 </Col>
               </Row>
 
-              {/* Row with time slots, each with a shift timer above it */}
+              {/* Row with time slots */}
               <Row gutter={16} align="top">
                 {timeslots.map((slot, timeIndex) => (
                   <Col
@@ -285,9 +272,7 @@ export const ScheduleGrid: React.FC = () => {
                     span={24}
                     className="time-slot-container-mobile"
                   >
-                    {/* Shift Timer (above the slot) */}
                     <div className="shift-timer-mobile">{slot}</div>
-                    {/* Time Slot */}
                     <div
                       className={`time-slot-mobile ${
                         isToday ? "current-slot-mobile" : ""
@@ -301,6 +286,28 @@ export const ScheduleGrid: React.FC = () => {
             </div>
           );
         })}
+      </div>
+      <div className="footer-mobile">
+        {/* Sticky Week Title */}
+        <Title className="week-title-mobile" level={4}>
+          Woche {currentWeek}
+        </Title>
+
+        {/* Sticky Navigation Buttons */}
+        <div className="navigation-buttons-mobile">
+          <Button
+            icon={<LeftOutlined />}
+            onClick={() => handleWeekChange("left")}
+            style={{ fontSize: "20px", padding: "10px 20px", height: "40px" }}
+            disabled={currentWeek === 1}
+          />
+          <Button
+            icon={<RightOutlined />}
+            onClick={() => handleWeekChange("right")}
+            style={{ fontSize: "20px", padding: "10px 20px", height: "40px" }}
+            disabled={currentWeek === totalWeeks}
+          />
+        </div>
       </div>
     </div>
   );

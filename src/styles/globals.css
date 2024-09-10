@@ -6,6 +6,7 @@ body {
   box-sizing: border-box;
   font-family: Arial, sans-serif;
   height: 100%;
+  height: calc(var(--vh, 1vh) * 100);
   overflow: hidden;
 }
 
@@ -175,20 +176,33 @@ html body .ant-layout-sider-trigger {
 .mobile-schedule {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
   text-align: center;
   background-color: #fff;
   border-radius: 10px;
+  overflow: hidden;
+  height: calc(var(--vh, 1vh) * 100);
 }
 
 .schedule-header-mobile {
   justify-content: center;
+  z-index: 1000;
   background-color: #fff;
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  position: fixed;
+  top: 60px;
+  width: 100%;
   padding: 10px;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  margin-bottom: 10px;
+  border-bottom: 1px solid rgb(129, 129, 129);
+}
+.footer-mobile {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  border-top: 1px solid rgb(129, 129, 129);
+  background-color: #fff;
+  padding-top: 10px;
 }
 
 .week-title-mobile {
@@ -198,22 +212,27 @@ html body .ant-layout-sider-trigger {
   margin-bottom: 0 !important;
 }
 .navigation-buttons-mobile {
-  position: sticky;
   z-index: 10;
   background-color: #fff;
   text-align: center;
-  padding: 15px;
+  padding: 10px;
 }
 
 .week-container-mobile {
   flex-grow: 1;
+  max-height: 100%;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   transition: transform 0.3s ease-in-out;
-  padding: 15px;
+  padding: 5px;
   min-height: 0;
   background: #fff;
+  margin-bottom: 165px;
+  margin-top: 55px;
+  flex-direction: column; /* Keep days stacked vertically */
+  transition: transform 0.3s ease-in-out;
+
 }
 
 .week-container-mobile.active {
@@ -281,11 +300,12 @@ html body .ant-layout-sider-trigger {
   --border-style-top-mobile-current-slot: 1px solid rgb(88, 158, 220);
 }
 .time-slot-mobile {
-  height: 50px;
+  height: 60px;
   display: flex;
   justify-content: center;
   align-items: center;
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  border-top: var(--border-style-top-mobile);
 }
 
 .current-slot-mobile {
@@ -298,6 +318,13 @@ html body .ant-layout-sider-trigger {
   font-weight: bold;
 }
 
-.shift-timer-mobile {
-  border-top: var(--border-style-top-mobile);
+.weeks-wrapper-mobile {
+  display: flex; /* This will allow sliding between weeks */
+  width: 100%;
+  transition: transform 0.3s ease-in-out;
+}
+
+.week-content-mobile {
+  flex-shrink: 0;
+  width: 100%;
 }

@@ -54,7 +54,6 @@ export const MainContent: React.FC<MainContentProps> = ({ children, mode }) => {
       style={{
         flexGrow: 1,
         padding: paddingValue,
-        overflowY: "auto",
         backgroundColor: mode === "dark" ? "#141414" : "#f5f5f5",
         display: "flex",
         flexDirection: "column",

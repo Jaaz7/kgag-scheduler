@@ -16,6 +16,7 @@ import "@refinedev/antd/dist/reset.css";
 import { Metadata } from "next";
 import { ReactNode } from "react";
 import { metadata as serverMetadata } from "@/lib/supabase/server";
+import ViewportHeightSetter from "@components/common/ViewportHeightSetter";
 
 export const metadata: Metadata = serverMetadata;
 
@@ -23,6 +24,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body>
+        <ViewportHeightSetter />
         <App>
           <RefineKbarProvider>
             <AntdRegistry>
