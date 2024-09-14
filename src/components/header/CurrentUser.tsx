@@ -115,7 +115,7 @@ const CurrentUser = () => {
 
   const content = (
     <div style={{ display: "flex", flexDirection: "column" }}>
-      <Text strong style={{ padding: "12px", textAlign: "center" }}>
+      <Text strong style={{ padding: "12px", textAlign: "center", zIndex: "999" }}>
         {user?.name}
       </Text>
       <div
@@ -134,7 +134,7 @@ const CurrentUser = () => {
           block
           onClick={() => setIsOpen(true)}
         >
-          Account Settings
+          Kontoeinstellungen
         </Button>
       </div>
     </div>

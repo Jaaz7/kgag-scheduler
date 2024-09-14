@@ -108,7 +108,7 @@ export default function LoginPage() {
           if (profileError || !profileData) {
             console.error("Error fetching profile:", profileError?.message);
             message.error(
-              "Login successful, but failed to retrieve user information."
+              "Anmeldung erfolgreich, aber Benutzerinformationen konnten nicht abgerufen werden."
             );
           } else {
             const { name } = profileData;
@@ -125,10 +125,14 @@ export default function LoginPage() {
         router.push(redirectTo);
       } catch (err) {
         console.error("Error fetching user profile:", err);
-        message.error("An error occurred while fetching user profile.");
+        message.error(
+          "Beim Abrufen des Benutzerprofils ist ein Fehler aufgetreten."
+        );
       }
     } else {
-      message.error("Login failed. Please check your email and password.");
+      message.error(
+        "Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre E-Mail und Ihr Passwort."
+      );
       form.setFieldsValue({ password: "" });
       setTimeout(() => {
         if (passwordInputRef.current) {
@@ -208,7 +212,7 @@ export default function LoginPage() {
               <path d="M14.763.075A.5.5 0 0 1 15 .5v15a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5V14h-1v1.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V10a.5.5 0 0 1 .342-.474L6 7.64V4.5a.5.5 0 0 1 .276-.447l8-4a.5.5 0 0 1 .487.022M6 8.694 1 10.36V15h5zM7 15h2v-1.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5V15h2V1.309l-7 3.5z" />
               <path d="M2 11h1v1H2zm2 0h1v1H4zm-2 2h1v1H2zm2 0h1v1H4zm4-4h1v1H8zm2 0h1v1h-1zm-2 2h1v1H8zm2 0h1v1h-1zm2-2h1v1h-1zm0 2h1v1h-1zM8 7h1v1H8zm2 0h1v1h-1zm2 0h1v1h-1zM8 5h1v1H8zm2 0h1v1h-1zm2 0h1v1h-1zm0-2h1v1h-1z" />
             </svg>
-            <Title style={styles.title}>Sign in</Title>
+            <Title style={styles.title}>Einloggen</Title>
           </div>
           <Switch
             checked={mode === "dark"}
@@ -236,14 +240,14 @@ export default function LoginPage() {
               {
                 type: "email",
                 required: true,
-                message: "Please input your Email!",
+                message: "Bitte geben Sie Ihre E-Mail ein!",
               },
             ]}
           >
             <Input
               ref={emailInputRef}
               prefix={<MailOutlined />}
-              placeholder="Email"
+              placeholder="E-Mail"
               allowClear
             />
           </Form.Item>
@@ -252,7 +256,7 @@ export default function LoginPage() {
             rules={[
               {
                 required: true,
-                message: "Please input your Password!",
+                message: "Bitte geben Sie Ihr Passwort ein!",
               },
             ]}
           >
@@ -260,17 +264,17 @@ export default function LoginPage() {
               ref={passwordInputRef}
               prefix={<LockOutlined />}
               type="password"
-              placeholder="Password"
+              placeholder="Passwort"
             />
           </Form.Item>
           <Form.Item>
             <Form.Item name="remember" valuePropName="checked" noStyle>
-              <Checkbox>Remember me</Checkbox>
+              <Checkbox>Angemeldet bleiben</Checkbox>
             </Form.Item>
           </Form.Item>
           <Form.Item style={{ marginBottom: "0px" }}>
             <Button block type="primary" htmlType="submit">
-              Log in
+              Anmelden
             </Button>
           </Form.Item>
         </Form>

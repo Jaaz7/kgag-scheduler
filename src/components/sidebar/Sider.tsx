@@ -12,6 +12,7 @@ import {
 } from "antd";
 import {
   UserOutlined,
+  BellOutlined,
   LogoutOutlined,
   BarsOutlined,
   LeftOutlined,
@@ -137,11 +138,11 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
   const handleLogoutClick = () => {
     setMobileSiderOpen(false);
     showModal({
-      title: "Confirm Logout",
-      content: <p>Are you sure you want to logout?</p>,
+      title: "Abmeldung bestätigen",
+      content: <p>Sind Sie sicher, dass Sie sich abmelden möchten?</p>,
       onOk: confirmLogout,
-      okText: "Logout",
-      cancelText: "Cancel",
+      okText: "Abmelden",
+      cancelText: "Abbrechen",
     });
   };
 
@@ -175,7 +176,7 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
         icon: <CalendarOutlined />,
         label: (
           <Link to="/schedule-admin">
-            {translate("schedule-admin.title", "Admin-Diesntplan")}
+            {translate("schedule-admin.title", "Admin Diesntplan")}
           </Link>
         ),
         style:
@@ -188,9 +189,22 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
             : {},
       },
       {
+        key: "admin-dashboard",
+        icon: <BellOutlined />,
+        label: <Link to="/admin-dashboard">Dashboard</Link>,
+        style:
+          currentPath === "/admin-dashboard"
+            ? {
+                backgroundColor: mode === "dark" ? "#40a9ff" : "#e6f7ff",
+                color: mode === "dark" ? "#fff" : token.colorPrimary,
+                borderColor: mode === "dark" ? "#40a9ff" : token.colorPrimary,
+              }
+            : {},
+      },
+      {
         key: "manage-users",
         icon: <UserOutlined />,
-        label: <Link to="/manage-users">Manage Users</Link>,
+        label: <Link to="/manage-users">Benutzer verwalten</Link>,
         style:
           currentPath === "/manage-users"
             ? {
@@ -202,29 +216,44 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
       }
     );
   } else if (userType === "standardbenutzer" && scheduleId === "hb-shop") {
-    items.push({
-      key: "schedule",
-      icon: <CalendarOutlined />,
-      label: (
-        <Link to="/schedule-hb">
-          {translate("schedule-hb.title", "Dienstplan")}
-        </Link>
-      ),
-      style:
-        currentPath === "/schedule-hb"
-          ? {
-              backgroundColor: mode === "dark" ? "#40a9ff" : "#e6f7ff",
-              color: mode === "dark" ? "#fff" : token.colorPrimary,
-              borderColor: mode === "dark" ? "#40a9ff" : token.colorPrimary,
-            }
-          : {},
-    });
+    items.push(
+      {
+        key: "schedule",
+        icon: <CalendarOutlined />,
+        label: (
+          <Link to="/schedule-hb">
+            {translate("schedule-hb.title", "Dienstplan")}
+          </Link>
+        ),
+        style:
+          currentPath === "/schedule-hb"
+            ? {
+                backgroundColor: mode === "dark" ? "#40a9ff" : "#e6f7ff",
+                color: mode === "dark" ? "#fff" : token.colorPrimary,
+                borderColor: mode === "dark" ? "#40a9ff" : token.colorPrimary,
+              }
+            : {},
+      },
+      {
+        key: "user-dashboard",
+        icon: <BellOutlined />,
+        label: <Link to="/user-dashboard">Dashboard</Link>,
+        style:
+          currentPath === "/user-dashboard"
+            ? {
+                backgroundColor: mode === "dark" ? "#40a9ff" : "#e6f7ff",
+                color: mode === "dark" ? "#fff" : token.colorPrimary,
+                borderColor: mode === "dark" ? "#40a9ff" : token.colorPrimary,
+              }
+            : {},
+      }
+    );
   }
 
   items.push({
     key: "logout",
     icon: <LogoutOutlined />,
-    label: translate("buttons.logout", "Logout"),
+    label: translate("buttons.logout", "Abmelden"),
     onClick: handleLogoutClick,
   });
 

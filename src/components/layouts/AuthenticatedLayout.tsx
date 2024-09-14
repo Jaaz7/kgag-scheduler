@@ -28,6 +28,8 @@ export default function AuthenticatedLayout({
       "/schedule-hb",
       "/manage-users",
       "/schedule-admin",
+      "/admin-dashboard",
+      "/user-dashboard",
     ];
     setIsValidPath(validPaths.includes(pathname));
   }, [pathname]);

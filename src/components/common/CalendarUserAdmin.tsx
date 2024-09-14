@@ -118,7 +118,7 @@ const getWeekDateRange = (week: Dayjs[], isMobile: boolean): string => {
     : `${startDate}-${endDate}`;
 };
 
-export const ScheduleGrid: React.FC = () => {
+export const ScheduleGridAdmin: React.FC = () => {
   // Use States and Variables-----------------------------------------
   // make the page scrollable to refresh page on mobile
   useEffect(() => {
@@ -240,11 +240,47 @@ export const ScheduleGrid: React.FC = () => {
   // Render Mobile Schedule---------------------------------------------
   const renderMobile = () => (
     <div className="mobile-schedule">
-      {/* Sticky Header */}
-      <Row gutter={16} className="schedule-header-mobile">
+      {/* First Row: Create New Schedule Button - Fixed at the top */}
+      <Row
+        gutter={16}
+        justify="center"
+        style={{
+          position: "fixed",
+          top: "60px",
+          width: "100%",
+          zIndex: 1,
+          backgroundColor: "#fff",
+          padding: "10px 0",
+          paddingLeft: "16px",
+        }}
+      >
+        <Col>
+          <Button
+            type="primary"
+            onClick={() => console.log("Create New Schedule")}
+          >
+            Neuen Zeitplan erstellen
+          </Button>
+        </Col>
+      </Row>
+
+      {/* Second Row: Dropdown and Toggle Fixed below the first row */}
+      <Row
+        gutter={16}
+        justify="center"
+        style={{
+          position: "fixed",
+          top: "110px",
+          width: "100%",
+          zIndex: 1,
+          backgroundColor: "#fff",
+          padding: "10px 0",
+        }}
+        className="schedule-header-mobile"
+      >
         <Col>
           <Select
-            style={{ width: 115 }}
+            style={{ width: 115, marginRight: "8px" }}
             value={selectedMonth}
             onChange={handleMonthChange}
           >
@@ -274,7 +310,7 @@ export const ScheduleGrid: React.FC = () => {
       </Row>
 
       {/* Scrollable Week Container */}
-      <div className="week-container-mobile">
+      <div className="week-container-mobile-admin">
         {allWeeks[currentWeek - 1].map((date: Dayjs, index: number) => {
           const isToday = date.isSame(today, "day");
           const isLeakedDay = date.month() !== selectedMonth;
@@ -321,7 +357,7 @@ export const ScheduleGrid: React.FC = () => {
                         isToday ? "current-slot-mobile" : ""
                       } ${isLeakedDay ? "leaked-day-mobile" : ""}`}
                     >
-                      Slot {timeIndex + 1}
+                      Zeitslot {timeIndex + 1}
                     </div>
                   </Col>
                 ))}
@@ -364,8 +400,17 @@ export const ScheduleGrid: React.FC = () => {
   // Render Desktop Schedule-----------------------------------------
   return (
     <div className="schedule-grid">
-      {/* Header: Year, Month, View Type Switch */}
-      <Row gutter={16} className="schedule-header">
+      {/* Header: Create New Schedule Button, Year, Month, View Type Switch */}
+      <Row gutter={16} className="schedule-header" justify="center">
+        <Col>
+          <Button
+            type="primary"
+            onClick={() => console.log("Create New Schedule")}
+          >
+            Neuen Zeitplan erstellen
+          </Button>
+        </Col>
+
         <Col>
           <Select
             style={{ width: 115 }}
@@ -389,12 +434,9 @@ export const ScheduleGrid: React.FC = () => {
             </Option>
           </Select>
         </Col>
+
         <Col>
-          <Radio.Group
-            value={viewType}
-            onChange={handleViewChange}
-            style={{ marginLeft: "10px" }}
-          >
+          <Radio.Group value={viewType} onChange={handleViewChange}>
             <Radio.Button value="week">Woche</Radio.Button>
             <Radio.Button value="month">Monat</Radio.Button>
           </Radio.Group>
@@ -477,7 +519,7 @@ export const ScheduleGrid: React.FC = () => {
                       onMouseEnter={() => handleMouseEnter(index)}
                       onMouseLeave={handleMouseLeave}
                     >
-                      Week {weekIndex + 1}, {days[index]}, Slot {timeIndex + 1}
+                      Woche {weekIndex + 1}, {days[index]}, Zeitslot {timeIndex + 1}
                     </Col>
                   ))}
                 </Row>

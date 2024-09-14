@@ -2,10 +2,10 @@
 
 import React from "react";
 
-export default function ManageUsersPage() {
+export default function UserDashboard() {
   return (
     <div>
-      <h1>Manage Users...</h1>
+      <h1>User Dashboard...</h1>
     </div>
   );
 }

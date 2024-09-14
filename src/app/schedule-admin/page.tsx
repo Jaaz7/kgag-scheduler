@@ -2,6 +2,7 @@
 
 import { Spin } from "antd";
 import React, { useEffect, useState } from "react";
+import { ScheduleGridAdmin } from "@components/common/CalendarUserAdmin";
 
 export default function ScheduleAdminPage() {
   const [loading, setLoading] = useState(true);
@@ -39,10 +40,5 @@ export default function ScheduleAdminPage() {
       </div>
     );
   }
-  return (
-    <div>
-      <h1>Schedule Admin Page</h1>
-      <h3>Only Admins should see this.</h3>
-    </div>
-  );
+  return <ScheduleGridAdmin />;
 }

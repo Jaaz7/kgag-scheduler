@@ -15,10 +15,10 @@ interface UserTypeWrapperProps {
 
 const ALLOWED_ROUTES: Record<string, Record<string, string[]>> = {
   admin: {
-    admin: ["/", "/schedule-admin", "/manage-users"],
+    admin: ["/", "/schedule-admin", "/manage-users", "/admin-dashboard"],
   },
   standardbenutzer: {
-    "hb-shop": ["/", "/schedule-hb"],
+    "hb-shop": ["/", "/schedule-hb", "/user-dashboard"],
   },
 };
 

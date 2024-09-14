@@ -90,7 +90,7 @@ export const AccountSettings = ({
           const signedUrl = await fetchSignedAvatarUrl(data.avatar_url);
           setAvatarUrl(signedUrl);
         } else {
-          setAvatarUrl(null); // Handle null or empty avatar_url by setting a default or placeholder
+          setAvatarUrl(null);
         }
 
         const initialData = {
@@ -226,10 +226,10 @@ export const AccountSettings = ({
     const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
 
     const errors = [];
-    if (!hasMinLength) errors.push("At least 8 characters");
-    if (!hasUppercase) errors.push("At least one uppercase letter");
-    if (!hasNumber) errors.push("At least one number");
-    if (!hasSpecialChar) errors.push("At least one special character");
+    if (!hasMinLength) errors.push("Mindestens 8 Zeichen");
+    if (!hasUppercase) errors.push("Mindestens ein Großbuchstabe");
+    if (!hasNumber) errors.push("Mindestens eine Zahl");
+    if (!hasSpecialChar) errors.push("Mindestens ein Sonderzeichen");
 
     setPasswordErrors(errors);
     setPasswordValid(errors.length === 0);
@@ -275,8 +275,8 @@ export const AccountSettings = ({
           showMessage(
             password !== confirmPassword ? "error" : "warning",
             password !== confirmPassword
-              ? "Passwords do not match."
-              : "Password does not meet the minimum requirements."
+              ? "Die Passwörter stimmen nicht überein."
+              : "Das Passwort erfüllt nicht die Mindestanforderungen."
           );
           setLoading(false);
           return;
@@ -289,7 +289,7 @@ export const AccountSettings = ({
             .eq("user_id", userId);
           passwordUpdated = true;
         } catch {
-          showMessage("error", "Failed to update password.");
+          showMessage("error", "Passwort konnte nicht aktualisiert werden.");
           setLoading(false);
           return;
         }
@@ -318,7 +318,7 @@ export const AccountSettings = ({
             onAvatarUpdate(signedUrl);
           }
         } catch {
-          showMessage("error", "Failed to update avatar.");
+          showMessage("error", "Avatar konnte nicht aktualisiert werden.");
           setLoading(false);
           return;
         }
@@ -348,7 +348,7 @@ export const AccountSettings = ({
             .eq("user_id", userId);
           settingsUpdated = true;
         } catch {
-          showMessage("error", "Failed to update profile.");
+          showMessage("error", "Profil konnte nicht aktualisiert werden.");
           setLoading(false);
           return;
         }
@@ -357,15 +357,15 @@ export const AccountSettings = ({
       showMessage(
         "success",
         passwordUpdated && settingsUpdated
-          ? "Password and settings saved successfully."
+          ? "Passwort und Einstellungen erfolgreich gespeichert."
           : passwordUpdated
-          ? "Password updated successfully."
-          : "Settings saved successfully."
+          ? "Passwort erfolgreich aktualisiert."
+          : "Einstellungen erfolgreich gespeichert."
       );
 
       setOpened(false);
     } catch {
-      showMessage("error", "An unexpected error occurred.");
+      showMessage("error", "Ein unerwarteter Fehler ist aufgetreten.");
     } finally {
       setLoading(false);
     }
@@ -386,22 +386,22 @@ export const AccountSettings = ({
 
         setAvatarUrl(null);
         onAvatarUpdate(null);
-        showMessage("success", "Avatar deleted successfully!");
+        showMessage("success", "Avatar erfolgreich gelöscht!");
         setOpened(false);
       }
     } catch {
-      showMessage("error", "Failed to delete avatar.");
+      showMessage("error", "Avatar konnte nicht gelöscht werden.");
     }
   };
 
   // Show modal to confirm avatar deletion
   const handleShowDeleteAvatarModal = () => {
     showModal({
-      title: "Confirm Avatar Deletion",
-      content: <p>Are you sure you want to delete your avatar?</p>,
+      title: "Löschen des Avatars bestätigen",
+      content: <p>Sind Sie sicher, dass Sie Ihren Avatar löschen möchten?</p>,
       onOk: handleDeleteAvatar,
-      okText: "Delete",
-      cancelText: "Cancel",
+      okText: "Löschen",
+      cancelText: "Abbrechen",
     });
   };
 
@@ -458,7 +458,7 @@ export const AccountSettings = ({
       }}
     >
       <div style={headerStyle}>
-        <strong>Account Settings</strong>
+        <strong>Kontoeinstellungen</strong>
       </div>
       <div style={{ padding: "16px" }}>
         <Card style={{ backgroundColor: mode === "dark" ? "#2a2a2a" : "#fff" }}>
@@ -472,33 +472,33 @@ export const AccountSettings = ({
             <Form.Item label="Name" name="name">
               <Input disabled style={disabledInputStyle} />
             </Form.Item>
-            <Form.Item label="User Type" name="userType">
+            <Form.Item label="Benutzertyp" name="userType">
               <Input disabled style={disabledInputStyle} />
             </Form.Item>
-            <Form.Item label="Email" name="email">
+            <Form.Item label="E-Mail" name="email">
               <Input disabled style={disabledInputStyle} />
             </Form.Item>
 
-            <Form.Item label="Working Days Per Week" name="work_days_per_week">
-              <Select placeholder="Select number of days">
-                <Option value="1">1 Day</Option>
-                <Option value="2">2 Days</Option>
-                <Option value="3">3 Days</Option>
-                <Option value="4">4 Days</Option>
-                <Option value="5">5 Days</Option>
+            <Form.Item label="Arbeitstage pro Woche" name="work_days_per_week">
+              <Select placeholder="Anzahl der Tage auswählen">
+                <Option value="1">1 Tag</Option>
+                <Option value="2">2 Tage</Option>
+                <Option value="3">3 Tage</Option>
+                <Option value="4">4 Tage</Option>
+                <Option value="5">5 Tage</Option>
               </Select>
             </Form.Item>
 
-            <Form.Item label="Shift Preference" name="shiftPreference">
-              <Select placeholder="No Preference" allowClear>
-                <Option value="no_preference">No Preference</Option>
+            <Form.Item label="Schichtpräferenz" name="shiftPreference">
+              <Select placeholder="Keine Präferenz" allowClear>
+                <Option value="no_preference">Keine Präferenz</Option>
                 <Option value="Frühschicht">Frühschicht</Option>
                 <Option value="Mittelschicht">Mittelschicht</Option>
                 <Option value="Spätschicht">Spätschicht</Option>
               </Select>
             </Form.Item>
 
-            <Form.Item label="Day Preferences">
+            <Form.Item label="Tagespräferenz">
               <>
                 <Checkbox
                   checked={noPreference}
@@ -508,7 +508,7 @@ export const AccountSettings = ({
                   }}
                   style={{ whiteSpace: "nowrap" }}
                 >
-                  No Preference
+                  Keine Präferenz
                 </Checkbox>
                 <Form.Item
                   name="dayPreferences"
@@ -517,7 +517,7 @@ export const AccountSettings = ({
                 >
                   <Select
                     mode="multiple"
-                    placeholder="Select your day preferences"
+                    placeholder="Tagespräferenzen auswählen"
                     allowClear
                     disabled={noPreference}
                     style={{ width: "100%" }}
@@ -534,11 +534,11 @@ export const AccountSettings = ({
               </>
             </Form.Item>
 
-            <Form.Item label="Password">
+            <Form.Item label="Passwort">
               <Input.Password
                 value={password}
                 onChange={handlePasswordChange}
-                placeholder="Enter new password"
+                placeholder="Neues Passwort eingeben"
               />
               {passwordErrors.length > 0 && (
                 <ul
@@ -557,31 +557,32 @@ export const AccountSettings = ({
               )}
               {password && passwordValid && (
                 <div style={{ color: "green", marginTop: 8 }}>
-                  <CheckCircleOutlined /> Your password meets all requirements.
+                  <CheckCircleOutlined /> Ihr Passwort erfüllt alle
+                  Anforderungen.
                 </div>
               )}
             </Form.Item>
 
-            <Form.Item label="Confirm Password">
+            <Form.Item label="Passwort bestätigen">
               <Input.Password
                 value={confirmPassword}
                 onChange={handleConfirmPasswordChange}
-                placeholder="Confirm new password"
+                placeholder="Neues Passwort bestätigen"
               />
               {confirmPassword && !passwordsMatch && (
                 <div style={{ color: "red", marginTop: 8 }}>
-                  <CloseCircleOutlined /> Passwords do not match.
+                  <CloseCircleOutlined /> Die Passwörter stimmen nicht überein.
                 </div>
               )}
               {confirmPassword && passwordsMatch && (
                 <div style={{ color: "green", marginTop: 8 }}>
-                  <CheckCircleOutlined /> Passwords match!
+                  <CheckCircleOutlined /> Die Passwörter stimmen überein!
                 </div>
               )}
             </Form.Item>
 
             <Form.Item
-              label="Upload Avatar"
+              label="Avatar hochladen"
               name="avatarUrl"
               valuePropName="fileList"
               getValueFromEvent={(e) =>
@@ -606,7 +607,7 @@ export const AccountSettings = ({
                   return false;
                 }}
               >
-                <Button icon={<UploadOutlined />}>Upload Avatar</Button>
+                <Button icon={<UploadOutlined />}>Avatar hochladen</Button>
               </Upload>
 
               {previewImage && (
@@ -630,7 +631,7 @@ export const AccountSettings = ({
                     }}
                     danger
                   >
-                    Clear Selected Image
+                    Ausgewähltes Bild entfernen
                   </Button>
                 </div>
               )}
@@ -643,7 +644,7 @@ export const AccountSettings = ({
                 danger
                 onClick={handleShowDeleteAvatarModal}
               >
-                Delete Current Avatar
+                Aktuellen Avatar löschen
               </Button>
             )}
           </Form>
@@ -662,7 +663,7 @@ export const AccountSettings = ({
               style={{ display: "flex", alignItems: "center", gap: "5px" }}
             >
               <SaveOutlined style={{ fontSize: "16px" }} />
-              <span>Save</span>
+              <span>Speichern</span>
             </Button>
           </div>
         </Card>
