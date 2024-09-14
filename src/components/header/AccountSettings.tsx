@@ -62,6 +62,40 @@ export const AccountSettings = ({
   const [passwordsMatch, setPasswordsMatch] = useState(false);
   const { showModal } = useModal();
   const { mode } = useContext(ColorModeContext);
+  const [shiftNoPreference, setShiftNoPreference] = useState(false);
+  const availableDayOptions = [
+    "Montag",
+    "Dienstag",
+    "Mittwoch",
+    "Donnerstag",
+    "Freitag",
+    "Samstag",
+  ];
+  const availableShiftOptions = ["Frühschicht", "Mittelschicht", "Spätschicht"];
+
+  const handleShiftPreferencesChange = (selectedOptions: string[]) => {
+    if (selectedOptions.length === availableShiftOptions.length) {
+      message.warning(
+        "Nicht in der Lage, alle Optionen auszuwählen, 'Keine Präferenz' gewählt."
+      );
+      form.setFieldsValue({ shiftPreference: [] });
+      setShiftNoPreference(true);
+    } else {
+      form.setFieldsValue({ shiftPreference: selectedOptions });
+    }
+  };
+
+  const handleDayPreferencesChange = (selectedOptions: string[]) => {
+    if (selectedOptions.length === availableDayOptions.length) {
+      message.warning(
+        "Nicht in der Lage, alle Optionen auszuwählen, 'Keine Präferenz' gewählt."
+      );
+      form.setFieldsValue({ dayPreferences: [] });
+      setNoPreference(true);
+    } else {
+      form.setFieldsValue({ dayPreferences: selectedOptions });
+    }
+  };
 
   // Fetch user data when drawer is opened
   const { data, isLoading, refetch } = useQuery<any, HttpError>(
@@ -86,27 +120,29 @@ export const AccountSettings = ({
     {
       enabled: opened,
       onSuccess: async (data) => {
-        if (data.avatar_url) {
-          const signedUrl = await fetchSignedAvatarUrl(data.avatar_url);
-          setAvatarUrl(signedUrl);
-        } else {
-          setAvatarUrl(null);
-        }
-
         const initialData = {
           ...data,
           userType: data.user_type,
           email: data.email,
-          shiftPreference: data.shift_preference || "",
+          shiftPreference: data.shift_preference || [],
           dayPreferences: data.day_preferences || [],
           work_days_per_week: data.work_days_per_week || "1",
         };
 
+        // For day preferences
         if (initialData.dayPreferences.includes("no_preference")) {
           setNoPreference(true);
           initialData.dayPreferences = [];
         } else {
           setNoPreference(false);
+        }
+
+        // For shift preferences
+        if (initialData.shiftPreference.includes("no_preference")) {
+          setShiftNoPreference(true);
+          initialData.shiftPreference = [];
+        } else {
+          setShiftNoPreference(false);
         }
 
         form.setFieldsValue(initialData);
@@ -270,6 +306,7 @@ export const AccountSettings = ({
     try {
       setLoading(true);
 
+      // Password validation and update
       if (password || confirmPassword) {
         if (!validatePassword(password) || password !== confirmPassword) {
           showMessage(
@@ -295,6 +332,7 @@ export const AccountSettings = ({
         }
       }
 
+      // Avatar handling
       let avatarPath = data?.avatar_url || "";
       if (selectedFile) {
         try {
@@ -324,15 +362,28 @@ export const AccountSettings = ({
         }
       }
 
-      const shiftPreference = form.getFieldValue("shiftPreference");
-      const dayPreferences = noPreference
-        ? ["no_preference"]
-        : form.getFieldValue("dayPreferences");
+      let shiftPreference = form.getFieldValue("shiftPreference");
+      let dayPreferences = form.getFieldValue("dayPreferences");
+
+      if (shiftNoPreference) {
+        shiftPreference = ["no_preference"];
+      } else if (!shiftPreference || shiftPreference.length === 0) {
+        setShiftNoPreference(true);
+        shiftPreference = ["no_preference"];
+      }
+
+      if (noPreference) {
+        dayPreferences = ["no_preference"];
+      } else if (!dayPreferences || dayPreferences.length === 0) {
+        setNoPreference(true);
+        dayPreferences = ["no_preference"];
+      }
+
       const workDaysPerWeek = form.getFieldValue("work_days_per_week");
 
       if (
         avatarPath !== data?.avatar_url ||
-        shiftPreference !== initialValues.shift_preference ||
+        !isEqual(shiftPreference, initialValues.shift_preference) ||
         !isEqual(dayPreferences, initialValues.day_preferences) ||
         workDaysPerWeek !== initialValues.work_days_per_week
       ) {
@@ -354,6 +405,7 @@ export const AccountSettings = ({
         }
       }
 
+      // Show success message based on what was updated
       showMessage(
         "success",
         passwordUpdated && settingsUpdated
@@ -489,13 +541,37 @@ export const AccountSettings = ({
               </Select>
             </Form.Item>
 
-            <Form.Item label="Schichtpräferenz" name="shiftPreference">
-              <Select placeholder="Keine Präferenz" allowClear>
-                <Option value="no_preference">Keine Präferenz</Option>
-                <Option value="Frühschicht">Frühschicht</Option>
-                <Option value="Mittelschicht">Mittelschicht</Option>
-                <Option value="Spätschicht">Spätschicht</Option>
-              </Select>
+            <Form.Item label="Schichtpräferenz">
+              <>
+                <Checkbox
+                  checked={shiftNoPreference}
+                  onChange={(e) => {
+                    setShiftNoPreference(e.target.checked);
+                    form.setFieldsValue({ shiftPreference: [] });
+                  }}
+                  style={{ whiteSpace: "nowrap" }}
+                >
+                  Keine Präferenz
+                </Checkbox>
+                <Form.Item name="shiftPreference" noStyle>
+                  <Select
+                    mode="multiple"
+                    placeholder={
+                      shiftNoPreference
+                        ? "Keine Präferenz"
+                        : "Schichtpräferenzen auswählen"
+                    }
+                    allowClear
+                    disabled={shiftNoPreference}
+                    style={{ width: "100%" }}
+                    onChange={handleShiftPreferencesChange}
+                  >
+                    <Option value="Frühschicht">Frühschicht</Option>
+                    <Option value="Mittelschicht">Mittelschicht</Option>
+                    <Option value="Spätschicht">Spätschicht</Option>
+                  </Select>
+                </Form.Item>
+              </>
             </Form.Item>
 
             <Form.Item label="Tagespräferenz">
@@ -510,18 +586,18 @@ export const AccountSettings = ({
                 >
                   Keine Präferenz
                 </Checkbox>
-                <Form.Item
-                  name="dayPreferences"
-                  style={{ flex: 1, marginBottom: 0 }}
-                  noStyle
-                >
+                <Form.Item name="dayPreferences" noStyle>
                   <Select
                     mode="multiple"
-                    placeholder="Tagespräferenzen auswählen"
+                    placeholder={
+                      noPreference
+                        ? "Keine Präferenz"
+                        : "Tagespräferenzen auswählen"
+                    }
                     allowClear
                     disabled={noPreference}
                     style={{ width: "100%" }}
-                    showSearch={false}
+                    onChange={handleDayPreferencesChange}
                   >
                     <Option value="Montag">Montag</Option>
                     <Option value="Dienstag">Dienstag</Option>
