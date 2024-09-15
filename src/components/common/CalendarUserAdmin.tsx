@@ -238,8 +238,51 @@ export const ScheduleGridAdmin: React.FC = () => {
   }, []);
 
   // Render Mobile Schedule---------------------------------------------
+  const [slideDirection, setSlideDirection] = useState("");
+  const [isSliding, setIsSliding] = useState(false);
+  const [touchStartX, setTouchStartX] = useState(0); // Store initial touch X position
+  const [touchEndX, setTouchEndX] = useState(0); // Store final touch X position
+  const minSwipeDistance = 50; // Minimum distance required for a swipe
+
+  const handleWeekChangeWithSlide = (direction: string) => {
+    if (isAnimating) return;
+
+    setIsSliding(true);
+    setSlideDirection(direction);
+
+    setTimeout(() => {
+      handleWeekChange(direction as string);
+      setIsSliding(false);
+    }, 150); // Keep the duration the same for sliding transition
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStartX(e.targetTouches[0].clientX); // Capture the starting X position
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEndX(e.targetTouches[0].clientX); // Update the X position as the user moves
+  };
+
+  const handleTouchEnd = () => {
+    const swipeDistance = touchStartX - touchEndX; // Calculate the swipe distance
+
+    if (swipeDistance > minSwipeDistance) {
+      // Swiped left, go to the next week
+      handleWeekChangeWithSlide("right");
+    } else if (swipeDistance < -minSwipeDistance) {
+      // Swiped right, go to the previous week
+      handleWeekChangeWithSlide("left");
+    }
+  };
+
   const renderMobile = () => (
-    <div className="mobile-schedule">
+    <div
+      className="mobile-schedule"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd} // Attach swipe gesture handlers
+    >
       {/* First Row: Create New Schedule Button - Fixed at the top */}
       <Row
         gutter={16}
@@ -310,14 +353,23 @@ export const ScheduleGridAdmin: React.FC = () => {
       </Row>
 
       {/* Scrollable Week Container */}
-      <div className="week-container-mobile-admin">
+      <div
+        className={`week-container-mobile-admin ${isSliding ? "sliding" : ""}`}
+        style={{
+          transform: isSliding
+            ? slideDirection === "left"
+              ? "translateX(25%)"
+              : "translateX(-25%)"
+            : "translateX(0)",
+        }}
+      >
         {allWeeks[currentWeek - 1].map((date: Dayjs, index: number) => {
           const isToday = date.isSame(today, "day");
           const isLeakedDay = date.month() !== selectedMonth;
 
           return (
             <div key={index} className="mobile-day">
-              {/* Row with day-date-container */}
+              {/* Day and Date Container */}
               <Row gutter={16} align="middle">
                 <Col span={24}>
                   <div className="day-date-container">
@@ -343,21 +395,17 @@ export const ScheduleGridAdmin: React.FC = () => {
                 </Col>
               </Row>
 
-              {/* Row with time slots */}
+              {/* Time Slots */}
               <Row gutter={16} align="top">
                 {timeslots.map((slot, timeIndex) => (
-                  <Col
-                    key={timeIndex}
-                    span={24}
-                    className="time-slot-container-mobile"
-                  >
+                  <Col key={timeIndex} span={24}>
                     <div className="shift-timer-mobile">{slot}</div>
                     <div
                       className={`time-slot-mobile ${
                         isToday ? "current-slot-mobile" : ""
                       } ${isLeakedDay ? "leaked-day-mobile" : ""}`}
                     >
-                      Zeitslot {timeIndex + 1}
+                      Slot {timeIndex + 1}
                     </div>
                   </Col>
                 ))}
@@ -366,25 +414,25 @@ export const ScheduleGridAdmin: React.FC = () => {
           );
         })}
       </div>
+
+      {/* Navigation Buttons and Footer */}
       <div className="footer-mobile">
-        {/* Sticky Week Title */}
         <Title className="week-title-mobile" level={4}>
           {`Woche `}
           <span className="week-number">{currentWeek}</span>{" "}
           {getWeekDateRange(allWeeks[currentWeek - 1], isMobile)}
         </Title>
 
-        {/* Sticky Navigation Buttons */}
         <div className="navigation-buttons-mobile">
           <Button
             icon={<LeftOutlined />}
-            onClick={() => handleWeekChange("left")}
+            onClick={() => handleWeekChangeWithSlide("left")}
             style={{ fontSize: "20px", padding: "10px 20px", height: "40px" }}
             disabled={currentWeek === 1}
           />
           <Button
             icon={<RightOutlined />}
-            onClick={() => handleWeekChange("right")}
+            onClick={() => handleWeekChangeWithSlide("right")}
             style={{ fontSize: "20px", padding: "10px 20px", height: "40px" }}
             disabled={currentWeek === totalWeeks}
           />
@@ -519,7 +567,8 @@ export const ScheduleGridAdmin: React.FC = () => {
                       onMouseEnter={() => handleMouseEnter(index)}
                       onMouseLeave={handleMouseLeave}
                     >
-                      Woche {weekIndex + 1}, {days[index]}, Zeitslot {timeIndex + 1}
+                      Woche {weekIndex + 1}, {days[index]}, Zeitslot{" "}
+                      {timeIndex + 1}
                     </Col>
                   ))}
                 </Row>

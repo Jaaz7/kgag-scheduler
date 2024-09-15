@@ -223,21 +223,33 @@ html body .ant-layout-sider-trigger {
   padding: 10px;
 }
 
+.week-content-mobile {
+  flex-shrink: 0;
+  width: 100%;
+  transition: transform 0.5s ease-in-out;
+}
+
 .week-container-mobile {
   flex-grow: 1;
   max-height: 100%;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  transition: transform 0.3s ease-in-out;
   padding: 5px;
   -webkit-overflow-scrolling: touch;
+  transition: transform 0.150s ease-in-out;
   min-height: 0;
   background: #fff;
   margin-bottom: 165px;
   margin-top: 55px;
-  flex-direction: column;
-  transition: transform 0.3s ease-in-out;
+  width: 100%;
+  will-change: transform;
+  scrollbar-width: none;
+}
+
+
+.week-container-mobile::-webkit-scrollbar {
+  display: none;
 }
 
 .week-container-mobile-admin {
@@ -246,20 +258,19 @@ html body .ant-layout-sider-trigger {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  transition: transform 0.3s ease-in-out;
+  transition: transform 0.150s ease-in-out;
   padding: 5px;
   -webkit-overflow-scrolling: touch;
   min-height: 0;
   background: #fff;
-  margin-bottom: 165px;
   margin-top: 100px;
-  flex-direction: column;
-  transition: transform 0.3s ease-in-out;
+  margin-bottom: 160px;
+  will-change: transform;
+  scrollbar-width: none;
 }
 
-.week-container-mobile.active {
-  visibility: visible;
-  opacity: 1;
+.week-container-mobile-admin::-webkit-scrollbar {
+  display: none;
 }
 
 .leaked-day-mobile {
@@ -344,11 +355,6 @@ html body .ant-layout-sider-trigger {
   display: flex;
   width: 100%;
   transition: transform 0.3s ease-in-out;
-}
-
-.week-content-mobile {
-  flex-shrink: 0;
-  width: 100%;
 }
 
 .schedule-header-create-schedule {
