@@ -5,7 +5,7 @@ import React from "react";
 export default function UserDashboard() {
   return (
     <div>
-      <h1>User Dashboard...</h1>
+      <h1>User dashboard und Benachrichtigungen (in Entwicklung...)</h1>
     </div>
   );
 }

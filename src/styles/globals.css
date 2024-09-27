@@ -8,6 +8,11 @@ body {
   height: 100%;
   height: calc(var(--vh, 1vh) * 100);
   overflow: hidden;
+  -webkit-scrollbar {
+    display: none;
+  }
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 @keyframes pop-up {
@@ -201,6 +206,21 @@ html body .ant-layout-sider-trigger {
   margin-bottom: 10px;
   border-bottom: 1px solid rgb(129, 129, 129);
 }
+
+.schedule-header-mobile-admin {
+  left: -16px;
+  justify-content: center;
+  z-index: 10;
+  background-color: #fff;
+  position: fixed;
+  top: 60px;
+  width: 100%;
+  padding: 10px;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  margin-bottom: 10px;
+  border-bottom: 1px solid rgb(129, 129, 129);
+}
 .footer-mobile {
   position: fixed;
   bottom: 0;
@@ -226,7 +246,6 @@ html body .ant-layout-sider-trigger {
 .week-content-mobile {
   flex-shrink: 0;
   width: 100%;
-  transition: transform 0.5s ease-in-out;
 }
 
 .week-container-mobile {
@@ -237,40 +256,22 @@ html body .ant-layout-sider-trigger {
   flex-direction: column;
   padding: 5px;
   -webkit-overflow-scrolling: touch;
-  transition: transform 0.150s ease-in-out;
   min-height: 0;
   background: #fff;
   margin-bottom: 165px;
   margin-top: 55px;
   width: 100%;
-  will-change: transform;
   scrollbar-width: none;
+  will-change: transform;
+  transition: all 0.15s ease-in-out;
 }
-
 
 .week-container-mobile::-webkit-scrollbar {
   display: none;
 }
 
-.week-container-mobile-admin {
-  flex-grow: 1;
-  max-height: 100%;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  transition: transform 0.150s ease-in-out;
-  padding: 5px;
-  -webkit-overflow-scrolling: touch;
-  min-height: 0;
-  background: #fff;
-  margin-top: 100px;
-  margin-bottom: 160px;
-  will-change: transform;
-  scrollbar-width: none;
-}
-
-.week-container-mobile-admin::-webkit-scrollbar {
-  display: none;
+.return-button-mobile {
+  top: -4px;
 }
 
 .leaked-day-mobile {

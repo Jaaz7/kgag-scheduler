@@ -106,16 +106,16 @@ const getAllWeeksInMonth = (selectedMonth: number, currentYear: number) => {
 };
 
 const getWeekDateRange = (week: Dayjs[], isMobile: boolean): string => {
-  const startDate = week[0].format("DD");
-  const endDate = week[6].format("DD");
+  const startDate = week[0].format("DD.MM");
+  const endDate = week[6].format("DD.MM");
 
   // Check if today's date is within the week
   const isCurrentWeek = week.some((day) => day.isSame(today, "day"));
 
-  // Only add '(current)' if it's the current week and viewed on mobile
+  // Only add '(aktuell)' if it's the current week and viewed on mobile
   return isCurrentWeek && isMobile
-    ? `${startDate}-${endDate} (aktuell)`
-    : `${startDate}-${endDate}`;
+    ? `${startDate} - ${endDate} (aktuell)`
+    : `${startDate} - ${endDate}`;
 };
 
 export const ScheduleGrid: React.FC = () => {
@@ -126,26 +126,47 @@ export const ScheduleGrid: React.FC = () => {
       const weekContainer = document.querySelector(".week-container-mobile");
       const touchTarget = e.target as HTMLElement;
 
-      if (
-        (weekContainer && weekContainer.scrollTop === 0) ||
-        !weekContainer?.contains(touchTarget)
-      ) {
+      if (weekContainer && weekContainer.scrollTop === 0) {
+        // Allow the whole page to scroll when weekContainer is at the top
         document.body.style.overflow = "auto";
         document.documentElement.style.overflow = "auto";
+      } else {
+        // Disable the page scroll when weekContainer is not at the top
+        document.body.style.overflow = "hidden";
+        document.documentElement.style.overflow = "hidden";
       }
     };
 
-    const handleTouchEnd = () => {
-      document.body.style.overflow = "hidden";
-      document.documentElement.style.overflow = "hidden";
+    const handleScroll = () => {
+      const weekContainer = document.querySelector(".week-container-mobile");
+
+      if (weekContainer) {
+        if (weekContainer.scrollTop === 0) {
+          // When scrolled to the top of weekContainer, enable page scroll
+          document.body.style.overflow = "auto";
+          document.documentElement.style.overflow = "auto";
+        } else {
+          // Disable page scrolling when inside weekContainer
+          document.body.style.overflow = "hidden";
+          document.documentElement.style.overflow = "hidden";
+        }
+      }
     };
 
-    window.addEventListener("touchstart", handleTouchStart);
-    window.addEventListener("touchend", handleTouchEnd);
+    // Attach listeners to scroll and touchstart events
+    const weekContainer = document.querySelector(".week-container-mobile");
 
+    if (weekContainer) {
+      weekContainer.addEventListener("scroll", handleScroll);
+      window.addEventListener("touchstart", handleTouchStart);
+    }
+
+    // Clean up listeners on unmount
     return () => {
-      window.removeEventListener("touchstart", handleTouchStart);
-      window.removeEventListener("touchend", handleTouchEnd);
+      if (weekContainer) {
+        weekContainer.removeEventListener("scroll", handleScroll);
+        window.removeEventListener("touchstart", handleTouchStart);
+      }
     };
   }, []);
 
@@ -238,42 +259,111 @@ export const ScheduleGrid: React.FC = () => {
   }, []);
 
   // Render Mobile Schedule---------------------------------------------
-  const [slideDirection, setSlideDirection] = useState("");
-  const [isSliding, setIsSliding] = useState(false);
+
+  // New states for managing touch and swipe
   const [touchStartX, setTouchStartX] = useState(0);
-  const [touchEndX, setTouchEndX] = useState(0);
-  const minSwipeDistance = 50;
+  const [touchStartY, setTouchStartY] = useState(0);
+  const [currentTranslate, setCurrentTranslate] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isHorizontalSwipe, setIsHorizontalSwipe] = useState(false);
+  const [isVerticalSwipe, setIsVerticalSwipe] = useState(false);
 
-  const handleWeekChangeWithSlide = (direction: string) => {
-    if (isAnimating) return;
+  // Smooth transition for moving between weeks
+  const handleSwipeEnd = (direction: "left" | "right") => {
+    if (isTransitioning) return;
+    setIsTransitioning(true);
 
-    setIsSliding(true);
-    setSlideDirection(direction);
+    const swipeDistance =
+      direction === "left" ? window.innerWidth : -window.innerWidth;
+    setCurrentTranslate(swipeDistance);
 
     setTimeout(() => {
-      handleWeekChange(direction as string);
-      setIsSliding(false);
-    }, 150); // Adjust duration to match your preference
+      setCurrentWeek((prevWeek) => {
+        if (direction === "left") return Math.max(1, prevWeek - 1);
+        if (direction === "right") return Math.min(totalWeeks, prevWeek + 1);
+        return prevWeek;
+      });
+      setCurrentTranslate(0); // Reset translation to its original position
+      setIsTransitioning(false);
+    }, 150);
   };
 
+  // Handle touch start
   const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStartX(e.targetTouches[0].clientX);
-  };
+    if (isTransitioning) return;
+    setTouchStartX(e.touches[0].clientX);
+    setTouchStartY(e.touches[0].clientY);
+    const touchX = e.touches[0].clientX;
+    const edgeThreshold = 20; // Define a threshold near the edge of the screen
 
-  const handleTouchMove = (e: React.TouchEvent) => {
-    setTouchEndX(e.targetTouches[0].clientX);
-  };
-
-  const handleTouchEnd = () => {
-    const swipeDistance = touchStartX - touchEndX;
-
-    if (swipeDistance > minSwipeDistance) {
-      // Swiped left, go to the next week
-      handleWeekChangeWithSlide("right");
-    } else if (swipeDistance < -minSwipeDistance) {
-      // Swiped right, go to the previous week
-      handleWeekChangeWithSlide("left");
+    // If the touch starts too close to the left or right edge, do nothing
+    if (touchX < edgeThreshold || touchX > window.innerWidth - edgeThreshold) {
+      return;
     }
+    setIsDragging(true);
+    setIsHorizontalSwipe(false); // Reset swipe directions
+    setIsVerticalSwipe(false); // Reset swipe directions
+  };
+
+  // Handle touch move for smooth transitions
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging || isTransitioning) return;
+
+    const touchX = e.touches[0].clientX;
+    const touchY = e.touches[0].clientY;
+    const deltaX = touchX - touchStartX;
+    const deltaY = touchY - touchStartY;
+
+    // Block swiping to the right if it's the first week (deltaX > 0 means swiping right)
+    if (currentWeek === 1 && deltaX > 0) {
+      return;
+    }
+
+    // Block swiping to the left if it's the last week (deltaX < 0 means swiping left)
+    if (currentWeek === totalWeeks && deltaX < 0) {
+      return;
+    }
+
+    // Detect dominant swipe direction
+    if (!isHorizontalSwipe && !isVerticalSwipe) {
+      if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        setIsHorizontalSwipe(true); // Lock horizontal swipe
+      } else {
+        setIsVerticalSwipe(true); // Lock vertical swipe
+      }
+    }
+
+    // Handle horizontal swipe
+    if (isHorizontalSwipe && !isVerticalSwipe) {
+      const maxTranslate = window.innerWidth;
+      setCurrentTranslate(
+        Math.min(maxTranslate, Math.max(-maxTranslate, deltaX))
+      );
+      e.preventDefault(); // Prevent vertical scrolling during horizontal swipe
+    }
+
+    // Handle vertical swipe (scroll)
+    if (isVerticalSwipe && !isHorizontalSwipe) {
+      window.scrollBy(0, -deltaY); // Scroll vertically
+    }
+  };
+
+  // Handle touch end and determine if the swipe was enough to change weeks
+  const handleTouchEnd = () => {
+    const minSwipeDistance = window.innerWidth / 8;
+
+    if (isHorizontalSwipe && !isVerticalSwipe) {
+      if (currentTranslate > minSwipeDistance) {
+        handleSwipeEnd("left");
+      } else if (currentTranslate < -minSwipeDistance) {
+        handleSwipeEnd("right");
+      } else {
+        setCurrentTranslate(0); // Reset if swipe isn't far enough
+      }
+    }
+
+    setIsDragging(false); // Reset dragging state
   };
 
   const renderMobile = () => {
@@ -316,22 +406,19 @@ export const ScheduleGrid: React.FC = () => {
             </Radio.Group>
           </Col>
         </Row>
-
-        {/* Scrollable Week Container with sliding transition */}
+  
+        {/* Scrollable Week Container with sliding and fading transition */}
         <div
-          className={`week-container-mobile ${isSliding ? "sliding" : ""}`}
+          className="week-container-mobile"
           style={{
-            transform: isSliding
-              ? slideDirection === "left"
-                ? "translateX(25%)"
-                : "translateX(-25%)"
-              : "translateX(0)",
+            transform: `translateX(${currentTranslate}px)`,
+            transition: isDragging ? "none" : "transform 0.2s ease-out",
           }}
         >
           {allWeeks[currentWeek - 1].map((date: Dayjs, index: number) => {
-            const isToday = date.isSame(today, "day");
-            const isLeakedDay = date.month() !== selectedMonth;
-
+            const isToday = date.isSame(today, "day");  // Check if it's today
+            const isLeakedDay = date.month() !== selectedMonth;  // Check if it's in the current month
+  
             return (
               <div key={index} className="mobile-day">
                 {/* Day and Date Container */}
@@ -341,7 +428,7 @@ export const ScheduleGrid: React.FC = () => {
                       <span
                         className={
                           isLeakedDay
-                            ? "leaked-day-span-mobile"
+                            ? "leaked-day-span-mobile"  // Class for leaked days
                             : "day-span-mobile"
                         }
                       >
@@ -350,7 +437,7 @@ export const ScheduleGrid: React.FC = () => {
                       <span
                         className={
                           isLeakedDay
-                            ? "leaked-date-span-mobile"
+                            ? "leaked-date-span-mobile"  // Class for leaked days
                             : "date-span-mobile"
                         }
                       >
@@ -359,7 +446,6 @@ export const ScheduleGrid: React.FC = () => {
                     </div>
                   </Col>
                 </Row>
-
                 {/* Time Slots */}
                 <Row gutter={16} align="top">
                   {timeslots.map((slot, timeIndex) => (
@@ -367,8 +453,8 @@ export const ScheduleGrid: React.FC = () => {
                       <div className="shift-timer-mobile">{slot}</div>
                       <div
                         className={`time-slot-mobile ${
-                          isToday ? "current-slot-mobile" : ""
-                        } ${isLeakedDay ? "leaked-day-mobile" : ""}`}
+                          isToday ? "current-slot-mobile" : ""  // Highlight current day
+                        } ${isLeakedDay ? "leaked-day-mobile" : ""}`}  // Highlight leaked day
                       >
                         Slot {timeIndex + 1}
                       </div>
@@ -379,33 +465,35 @@ export const ScheduleGrid: React.FC = () => {
             );
           })}
         </div>
-
-        {/* Navigation Buttons and Footer */}
+  
+        {/* Footer with Week Navigation */}
         <div className="footer-mobile">
           <Title className="week-title-mobile" level={4}>
             {`Woche `}
-            <span className="week-number">{currentWeek}</span>{" "}
+            <span className="week-number">
+              {currentWeek}
+              {` `}
+            </span>
             {getWeekDateRange(allWeeks[currentWeek - 1], isMobile)}
           </Title>
-
+  
           <div className="navigation-buttons-mobile">
             <Button
               icon={<LeftOutlined />}
-              onClick={() => handleWeekChangeWithSlide("left")}
-              style={{ fontSize: "20px", padding: "10px 20px", height: "40px" }}
-              disabled={currentWeek === 1}
+              onClick={() => handleSwipeEnd("left")}
+              disabled={currentWeek === 1}  // Disable if on the first week
             />
             <Button
               icon={<RightOutlined />}
-              onClick={() => handleWeekChangeWithSlide("right")}
-              style={{ fontSize: "20px", padding: "10px 20px", height: "40px" }}
-              disabled={currentWeek === totalWeeks}
+              onClick={() => handleSwipeEnd("right")}
+              disabled={currentWeek === totalWeeks}  // Disable if on the last week
             />
           </div>
         </div>
       </div>
     );
   };
+  
 
   if (isMobile) {
     return renderMobile();

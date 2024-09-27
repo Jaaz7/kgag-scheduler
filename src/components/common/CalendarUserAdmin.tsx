@@ -6,6 +6,7 @@ import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import weekOfYear from "dayjs/plugin/weekOfYear";
 import isoWeek from "dayjs/plugin/isoWeek";
+import CreateScheduleButtonHB from "@lib/hb-algorithm/HB-CreateSchedule";
 
 dayjs.extend(weekOfYear);
 dayjs.extend(isoWeek);
@@ -106,46 +107,75 @@ const getAllWeeksInMonth = (selectedMonth: number, currentYear: number) => {
 };
 
 const getWeekDateRange = (week: Dayjs[], isMobile: boolean): string => {
-  const startDate = week[0].format("DD");
-  const endDate = week[6].format("DD");
+  const startDate = week[0].format("DD.MM");
+  const endDate = week[6].format("DD.MM");
 
   // Check if today's date is within the week
   const isCurrentWeek = week.some((day) => day.isSame(today, "day"));
 
-  // Only add '(current)' if it's the current week and viewed on mobile
+  // Only add '(aktuell)' if it's the current week and viewed on mobile
   return isCurrentWeek && isMobile
-    ? `${startDate}-${endDate} (aktuell)`
-    : `${startDate}-${endDate}`;
+    ? `${startDate} - ${endDate} (aktuell)`
+    : `${startDate} - ${endDate}`;
 };
 
-export const ScheduleGridAdmin: React.FC = () => {
+interface ScheduleGridAdminHBProps {
+  setSelectedShop: (shop: string | null) => void;
+}
+
+export const ScheduleGridAdminHB: React.FC<ScheduleGridAdminHBProps> = ({
+  setSelectedShop,
+}) => {
   // Use States and Variables-----------------------------------------
+  // make the page scrollable to refresh page on mobile
+   // Use States and Variables-----------------------------------------
   // make the page scrollable to refresh page on mobile
   useEffect(() => {
     const handleTouchStart = (e: TouchEvent) => {
       const weekContainer = document.querySelector(".week-container-mobile");
       const touchTarget = e.target as HTMLElement;
 
-      if (
-        (weekContainer && weekContainer.scrollTop === 0) ||
-        !weekContainer?.contains(touchTarget)
-      ) {
+      if (weekContainer && weekContainer.scrollTop === 0) {
+        // Allow the whole page to scroll when weekContainer is at the top
         document.body.style.overflow = "auto";
         document.documentElement.style.overflow = "auto";
+      } else {
+        // Disable the page scroll when weekContainer is not at the top
+        document.body.style.overflow = "hidden";
+        document.documentElement.style.overflow = "hidden";
       }
     };
 
-    const handleTouchEnd = () => {
-      document.body.style.overflow = "hidden";
-      document.documentElement.style.overflow = "hidden";
+    const handleScroll = () => {
+      const weekContainer = document.querySelector(".week-container-mobile");
+
+      if (weekContainer) {
+        if (weekContainer.scrollTop === 0) {
+          // When scrolled to the top of weekContainer, enable page scroll
+          document.body.style.overflow = "auto";
+          document.documentElement.style.overflow = "auto";
+        } else {
+          // Disable page scrolling when inside weekContainer
+          document.body.style.overflow = "hidden";
+          document.documentElement.style.overflow = "hidden";
+        }
+      }
     };
 
-    window.addEventListener("touchstart", handleTouchStart);
-    window.addEventListener("touchend", handleTouchEnd);
+    // Attach listeners to scroll and touchstart events
+    const weekContainer = document.querySelector(".week-container-mobile");
 
+    if (weekContainer) {
+      weekContainer.addEventListener("scroll", handleScroll);
+      window.addEventListener("touchstart", handleTouchStart);
+    }
+
+    // Clean up listeners on unmount
     return () => {
-      window.removeEventListener("touchstart", handleTouchStart);
-      window.removeEventListener("touchend", handleTouchEnd);
+      if (weekContainer) {
+        weekContainer.removeEventListener("scroll", handleScroll);
+        window.removeEventListener("touchstart", handleTouchStart);
+      }
     };
   }, []);
 
@@ -238,90 +268,136 @@ export const ScheduleGridAdmin: React.FC = () => {
   }, []);
 
   // Render Mobile Schedule---------------------------------------------
-  const [slideDirection, setSlideDirection] = useState("");
-  const [isSliding, setIsSliding] = useState(false);
-  const [touchStartX, setTouchStartX] = useState(0); // Store initial touch X position
-  const [touchEndX, setTouchEndX] = useState(0); // Store final touch X position
-  const minSwipeDistance = 50; // Minimum distance required for a swipe
 
-  const handleWeekChangeWithSlide = (direction: string) => {
-    if (isAnimating) return;
+  // New states for managing touch and swipe
+  const [touchStartX, setTouchStartX] = useState(0);
+  const [touchStartY, setTouchStartY] = useState(0);
+  const [currentTranslate, setCurrentTranslate] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isHorizontalSwipe, setIsHorizontalSwipe] = useState(false);
+  const [isVerticalSwipe, setIsVerticalSwipe] = useState(false);
 
-    setIsSliding(true);
-    setSlideDirection(direction);
+  // Smooth transition for moving between weeks
+  const handleSwipeEnd = (direction: "left" | "right") => {
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+
+    const swipeDistance =
+      direction === "left" ? window.innerWidth : -window.innerWidth;
+    setCurrentTranslate(swipeDistance);
 
     setTimeout(() => {
-      handleWeekChange(direction as string);
-      setIsSliding(false);
-    }, 150); // Keep the duration the same for sliding transition
+      setCurrentWeek((prevWeek) => {
+        if (direction === "left") return Math.max(1, prevWeek - 1);
+        if (direction === "right") return Math.min(totalWeeks, prevWeek + 1);
+        return prevWeek;
+      });
+      setCurrentTranslate(0); // Reset translation to its original position
+      setIsTransitioning(false);
+    }, 150);
   };
 
+  // Handle touch start
   const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStartX(e.targetTouches[0].clientX); // Capture the starting X position
+    if (isTransitioning) return;
+    setTouchStartX(e.touches[0].clientX);
+    setTouchStartY(e.touches[0].clientY);
+    const touchX = e.touches[0].clientX;
+    const edgeThreshold = 20; // Define a threshold near the edge of the screen
+
+    // If the touch starts too close to the left or right edge, do nothing
+    if (touchX < edgeThreshold || touchX > window.innerWidth - edgeThreshold) {
+      return;
+    }
+    setIsDragging(true);
+    setIsHorizontalSwipe(false); // Reset swipe directions
+    setIsVerticalSwipe(false); // Reset swipe directions
   };
 
+  // Handle touch move for smooth transitions
   const handleTouchMove = (e: React.TouchEvent) => {
-    setTouchEndX(e.targetTouches[0].clientX); // Update the X position as the user moves
-  };
+    if (!isDragging || isTransitioning) return;
 
-  const handleTouchEnd = () => {
-    const swipeDistance = touchStartX - touchEndX; // Calculate the swipe distance
+    const touchX = e.touches[0].clientX;
+    const touchY = e.touches[0].clientY;
+    const deltaX = touchX - touchStartX;
+    const deltaY = touchY - touchStartY;
 
-    if (swipeDistance > minSwipeDistance) {
-      // Swiped left, go to the next week
-      handleWeekChangeWithSlide("right");
-    } else if (swipeDistance < -minSwipeDistance) {
-      // Swiped right, go to the previous week
-      handleWeekChangeWithSlide("left");
+    // Block swiping to the right if it's the first week (deltaX > 0 means swiping right)
+    if (currentWeek === 1 && deltaX > 0) {
+      return;
+    }
+
+    // Block swiping to the left if it's the last week (deltaX < 0 means swiping left)
+    if (currentWeek === totalWeeks && deltaX < 0) {
+      return;
+    }
+
+    // Detect dominant swipe direction
+    if (!isHorizontalSwipe && !isVerticalSwipe) {
+      if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        setIsHorizontalSwipe(true); // Lock horizontal swipe
+      } else {
+        setIsVerticalSwipe(true); // Lock vertical swipe
+      }
+    }
+
+    // Handle horizontal swipe
+    if (isHorizontalSwipe && !isVerticalSwipe) {
+      const maxTranslate = window.innerWidth;
+      setCurrentTranslate(
+        Math.min(maxTranslate, Math.max(-maxTranslate, deltaX))
+      );
+      e.preventDefault(); // Prevent vertical scrolling during horizontal swipe
+    }
+
+    // Handle vertical swipe (scroll)
+    if (isVerticalSwipe && !isHorizontalSwipe) {
+      window.scrollBy(0, -deltaY); // Scroll vertically
     }
   };
 
-  const renderMobile = () => (
-    <div
-      className="mobile-schedule"
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd} // Attach swipe gesture handlers
-    >
-      {/* First Row: Create New Schedule Button - Fixed at the top */}
-      <Row
-        gutter={16}
-        justify="center"
-        style={{
-          position: "fixed",
-          top: "60px",
-          width: "100%",
-          zIndex: 1,
-          backgroundColor: "#fff",
-          padding: "10px 0",
-          paddingLeft: "16px",
-        }}
+  // Handle touch end and determine if the swipe was enough to change weeks
+  const handleTouchEnd = () => {
+    const minSwipeDistance = window.innerWidth / 8;
+
+    if (isHorizontalSwipe && !isVerticalSwipe) {
+      if (currentTranslate > minSwipeDistance) {
+        handleSwipeEnd("left");
+      } else if (currentTranslate < -minSwipeDistance) {
+        handleSwipeEnd("right");
+      } else {
+        setCurrentTranslate(0); // Reset if swipe isn't far enough
+      }
+    }
+
+    setIsDragging(false); // Reset dragging state
+  };
+
+  const renderMobile = () => {
+    return (
+      <div
+        className="mobile-schedule"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
+        {/* Sticky Header */}
+        <Row gutter={16} className="schedule-header-mobile-admin">
+        {/* Left-aligned circular Return Button */}
         <Col>
           <Button
-            type="primary"
-            onClick={() => console.log("Create New Schedule")}
-          >
-            Neuen Zeitplan erstellen
-          </Button>
+            onClick={() => setSelectedShop(null)} // Return to shops
+            icon={<LeftOutlined />} // Left arrow icon
+            shape="circle" // Circular button
+            size="large" // Adjust size to your preference
+            className="return-button-mobile" // Custom class for styling
+          />
         </Col>
-      </Row>
 
-      {/* Second Row: Dropdown and Toggle Fixed below the first row */}
-      <Row
-        gutter={16}
-        justify="center"
-        style={{
-          position: "fixed",
-          top: "110px",
-          width: "100%",
-          zIndex: 1,
-          backgroundColor: "#fff",
-          padding: "10px 0",
-        }}
-        className="schedule-header-mobile"
-      >
-        <Col>
+        {/* Centered Dropdown and Radio Group */}
+        <Col style={{ flexGrow: 1, display: 'flex', justifyContent: 'center' }}>
           <Select
             style={{ width: 115, marginRight: "8px" }}
             value={selectedMonth}
@@ -343,103 +419,101 @@ export const ScheduleGridAdmin: React.FC = () => {
               {months[monthsData.next.month]} {monthsData.next.year}
             </Option>
           </Select>
-        </Col>
-        <Col>
+
           <Radio.Group value={viewType} onChange={handleViewChange}>
             <Radio.Button value="week">Woche</Radio.Button>
             <Radio.Button value="month">Monat</Radio.Button>
           </Radio.Group>
         </Col>
       </Row>
-
-      {/* Scrollable Week Container */}
-      <div
-        className={`week-container-mobile-admin ${isSliding ? "sliding" : ""}`}
-        style={{
-          transform: isSliding
-            ? slideDirection === "left"
-              ? "translateX(25%)"
-              : "translateX(-25%)"
-            : "translateX(0)",
-        }}
-      >
-        {allWeeks[currentWeek - 1].map((date: Dayjs, index: number) => {
-          const isToday = date.isSame(today, "day");
-          const isLeakedDay = date.month() !== selectedMonth;
-
-          return (
-            <div key={index} className="mobile-day">
-              {/* Day and Date Container */}
-              <Row gutter={16} align="middle">
-                <Col span={24}>
-                  <div className="day-date-container">
-                    <span
-                      className={
-                        isLeakedDay
-                          ? "leaked-day-span-mobile"
-                          : "day-span-mobile"
-                      }
-                    >
-                      {fullDays[(date.day() + 6) % 7]}
-                    </span>
-                    <span
-                      className={
-                        isLeakedDay
-                          ? "leaked-date-span-mobile"
-                          : "date-span-mobile"
-                      }
-                    >
-                      {date.format("DD")}
-                    </span>
-                  </div>
-                </Col>
-              </Row>
-
-              {/* Time Slots */}
-              <Row gutter={16} align="top">
-                {timeslots.map((slot, timeIndex) => (
-                  <Col key={timeIndex} span={24}>
-                    <div className="shift-timer-mobile">{slot}</div>
-                    <div
-                      className={`time-slot-mobile ${
-                        isToday ? "current-slot-mobile" : ""
-                      } ${isLeakedDay ? "leaked-day-mobile" : ""}`}
-                    >
-                      Slot {timeIndex + 1}
+  
+        {/* Scrollable Week Container with sliding and fading transition */}
+        <div
+          className="week-container-mobile"
+          style={{
+            transform: `translateX(${currentTranslate}px)`,
+            transition: isDragging ? "none" : "transform 0.2s ease-out",
+          }}
+        >
+          {allWeeks[currentWeek - 1].map((date: Dayjs, index: number) => {
+            const isToday = date.isSame(today, "day");  // Check if it's today
+            const isLeakedDay = date.month() !== selectedMonth;  // Check if it's in the current month
+  
+            return (
+              <div key={index} className="mobile-day">
+                {/* Day and Date Container */}
+                <Row gutter={16} align="middle">
+                  <Col span={24}>
+                    <div className="day-date-container">
+                      <span
+                        className={
+                          isLeakedDay
+                            ? "leaked-day-span-mobile"  // Class for leaked days
+                            : "day-span-mobile"
+                        }
+                      >
+                        {fullDays[(date.day() + 6) % 7]}
+                      </span>
+                      <span
+                        className={
+                          isLeakedDay
+                            ? "leaked-date-span-mobile"  // Class for leaked days
+                            : "date-span-mobile"
+                        }
+                      >
+                        {date.format("DD")}
+                      </span>
                     </div>
                   </Col>
-                ))}
-              </Row>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Navigation Buttons and Footer */}
-      <div className="footer-mobile">
-        <Title className="week-title-mobile" level={4}>
-          {`Woche `}
-          <span className="week-number">{currentWeek}</span>{" "}
-          {getWeekDateRange(allWeeks[currentWeek - 1], isMobile)}
-        </Title>
-
-        <div className="navigation-buttons-mobile">
-          <Button
-            icon={<LeftOutlined />}
-            onClick={() => handleWeekChangeWithSlide("left")}
-            style={{ fontSize: "20px", padding: "10px 20px", height: "40px" }}
-            disabled={currentWeek === 1}
-          />
-          <Button
-            icon={<RightOutlined />}
-            onClick={() => handleWeekChangeWithSlide("right")}
-            style={{ fontSize: "20px", padding: "10px 20px", height: "40px" }}
-            disabled={currentWeek === totalWeeks}
-          />
+                </Row>
+                {/* Time Slots */}
+                <Row gutter={16} align="top">
+                  {timeslots.map((slot, timeIndex) => (
+                    <Col key={timeIndex} span={24}>
+                      <div className="shift-timer-mobile">{slot}</div>
+                      <div
+                        className={`time-slot-mobile ${
+                          isToday ? "current-slot-mobile" : ""  // Highlight current day
+                        } ${isLeakedDay ? "leaked-day-mobile" : ""}`}  // Highlight leaked day
+                      >
+                        Slot {timeIndex + 1}
+                      </div>
+                    </Col>
+                  ))}
+                </Row>
+              </div>
+            );
+          })}
+        </div>
+  
+        {/* Footer with Week Navigation */}
+        <div className="footer-mobile">
+          <Title className="week-title-mobile" level={4}>
+            {`Woche `}
+            <span className="week-number">
+              {currentWeek}
+              {` `}
+            </span>
+            {getWeekDateRange(allWeeks[currentWeek - 1], isMobile)}
+          </Title>
+  
+          <div className="navigation-buttons-mobile">
+            <Button
+              icon={<LeftOutlined />}
+              onClick={() => handleSwipeEnd("left")}
+              disabled={currentWeek === 1}  // Disable if on the first week
+            />
+            <Button
+              icon={<RightOutlined />}
+              onClick={() => handleSwipeEnd("right")}
+              disabled={currentWeek === totalWeeks}  // Disable if on the last week
+            />
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
+  
 
   if (isMobile) {
     return renderMobile();
@@ -448,58 +522,58 @@ export const ScheduleGridAdmin: React.FC = () => {
   // Render Desktop Schedule-----------------------------------------
   return (
     <div className="schedule-grid">
-      {/* Header: Create New Schedule Button, Year, Month, View Type Switch */}
-      <Row gutter={16} className="schedule-header" justify="center">
-        <Col>
-          <Button
-            type="primary"
-            onClick={() => console.log("Create New Schedule")}
+      {/* Header: Year, Month, View Type Switch */}
+      <Row gutter={16} className="schedule-header">
+       {/* Left aligned "Zurück" button */}
+       <Col style={{ flex: '0 0 auto' }}>
+        <Button
+          onClick={() => setSelectedShop(null)} // Return to shop selection
+          icon={<LeftOutlined />} // Optional icon to indicate going back
+          style={{ marginRight: "8px" }}
+        >
+          Zurück zu den Shops
+        </Button>
+      </Col>
+
+      {/* Center aligned Month Selector and View Switch */}
+      <Col style={{ flexGrow: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <Select
+          style={{ width: 115 }}
+          value={selectedMonth}
+          onChange={handleMonthChange}
+        >
+          <Option
+            key={monthsData.previous.month}
+            value={monthsData.previous.month}
           >
-            Neuen Zeitplan erstellen
-          </Button>
-        </Col>
-
-        <Col>
-          <Select
-            style={{ width: 115 }}
-            value={selectedMonth}
-            onChange={handleMonthChange}
+            {months[monthsData.previous.month]} {monthsData.previous.year}
+          </Option>
+          <Option
+            key={monthsData.current.month}
+            value={monthsData.current.month}
           >
-            <Option
-              key={monthsData.previous.month}
-              value={monthsData.previous.month}
-            >
-              {months[monthsData.previous.month]} {monthsData.previous.year}
-            </Option>
-            <Option
-              key={monthsData.current.month}
-              value={monthsData.current.month}
-            >
-              {months[monthsData.current.month]} {monthsData.current.year}
-            </Option>
-            <Option key={monthsData.next.month} value={monthsData.next.month}>
-              {months[monthsData.next.month]} {monthsData.next.year}
-            </Option>
-          </Select>
-        </Col>
+            {months[monthsData.current.month]} {monthsData.current.year}
+          </Option>
+          <Option key={monthsData.next.month} value={monthsData.next.month}>
+            {months[monthsData.next.month]} {monthsData.next.year}
+          </Option>
+        </Select>
 
-        <Col>
-          <Radio.Group value={viewType} onChange={handleViewChange}>
-            <Radio.Button value="week">Woche</Radio.Button>
-            <Radio.Button value="month">Monat</Radio.Button>
-          </Radio.Group>
-        </Col>
-      </Row>
+        <Radio.Group
+          value={viewType}
+          onChange={handleViewChange}
+          style={{ marginLeft: "10px" }}
+        >
+          <Radio.Button value="week">Woche</Radio.Button>
+          <Radio.Button value="month">Monat</Radio.Button>
+        </Radio.Group>
+      </Col>
 
-      {/* Time Slots Header */}
-      <Row gutter={50} className="time-header">
-        <Col span={2}></Col>
-        {timeslots.map((slot) => (
-          <Col span={7} key={slot}>
-            <div>{slot}</div>
-          </Col>
-        ))}
-      </Row>
+      {/* Right empty column to balance the space taken by the button on the left */}
+      <Col style={{ flex: '0 0 auto', visibility: 'hidden' }}>
+        <Button icon={<LeftOutlined />}>Dummy</Button> {/* Invisible dummy button */}
+      </Col>
+    </Row>
 
       {/* Week Schedule */}
       <div
@@ -567,8 +641,7 @@ export const ScheduleGridAdmin: React.FC = () => {
                       onMouseEnter={() => handleMouseEnter(index)}
                       onMouseLeave={handleMouseLeave}
                     >
-                      Woche {weekIndex + 1}, {days[index]}, Zeitslot{" "}
-                      {timeIndex + 1}
+                      Week {weekIndex + 1}, {days[index]}, Slot {timeIndex + 1}
                     </Col>
                   ))}
                 </Row>

@@ -29,6 +29,7 @@ import { isEqual } from "lodash";
 import { useModal } from "@/contexts/ModalProvider";
 import { ColorModeContext } from "@contexts/ColorModeContext";
 import "@/styles/globals.css";
+import dayjs from "dayjs";
 
 const { Option } = Select;
 
@@ -124,6 +125,9 @@ export const AccountSettings = ({
           ...data,
           userType: data.user_type,
           email: data.email,
+          birthday: data.birthday
+            ? dayjs(data.birthday).format("DD.MM.YYYY")
+            : "",
           shiftPreference: data.shift_preference || [],
           dayPreferences: data.day_preferences || [],
           work_days_per_week: data.work_days_per_week || "1",
@@ -530,85 +534,95 @@ export const AccountSettings = ({
             <Form.Item label="E-Mail" name="email">
               <Input disabled style={disabledInputStyle} />
             </Form.Item>
-
-            <Form.Item label="Arbeitstage pro Woche" name="work_days_per_week">
-              <Select placeholder="Anzahl der Tage auswählen">
-                <Option value="1">1 Tag</Option>
-                <Option value="2">2 Tage</Option>
-                <Option value="3">3 Tage</Option>
-                <Option value="4">4 Tage</Option>
-                <Option value="5">5 Tage</Option>
-              </Select>
+            <Form.Item label="Geburtstag" name="birthday">
+              <Input disabled style={disabledInputStyle} />
             </Form.Item>
 
-            <Form.Item label="Schichtpräferenz">
+            {!(
+              data?.user_type === "admin" && data?.schedule_id === "admin"
+            ) && (
               <>
-                <Checkbox
-                  checked={shiftNoPreference}
-                  onChange={(e) => {
-                    setShiftNoPreference(e.target.checked);
-                    form.setFieldsValue({ shiftPreference: [] });
-                  }}
-                  style={{ whiteSpace: "nowrap" }}
+                <Form.Item
+                  label="Arbeitstage pro Woche"
+                  name="work_days_per_week"
                 >
-                  Keine Präferenz
-                </Checkbox>
-                <Form.Item name="shiftPreference" noStyle>
-                  <Select
-                    mode="multiple"
-                    placeholder={
-                      shiftNoPreference
-                        ? "Keine Präferenz"
-                        : "Schichtpräferenzen auswählen"
-                    }
-                    allowClear
-                    disabled={shiftNoPreference}
-                    style={{ width: "100%" }}
-                    onChange={handleShiftPreferencesChange}
-                  >
-                    <Option value="Frühschicht">Frühschicht</Option>
-                    <Option value="Mittelschicht">Mittelschicht</Option>
-                    <Option value="Spätschicht">Spätschicht</Option>
+                  <Select placeholder="Anzahl der Tage auswählen">
+                    <Option value="1">1 Tag</Option>
+                    <Option value="2">2 Tage</Option>
+                    <Option value="3">3 Tage</Option>
+                    <Option value="4">4 Tage</Option>
+                    <Option value="5">5 Tage</Option>
                   </Select>
                 </Form.Item>
-              </>
-            </Form.Item>
 
-            <Form.Item label="Tagespräferenz">
-              <>
-                <Checkbox
-                  checked={noPreference}
-                  onChange={(e) => {
-                    setNoPreference(e.target.checked);
-                    form.setFieldsValue({ dayPreferences: [] });
-                  }}
-                  style={{ whiteSpace: "nowrap" }}
-                >
-                  Keine Präferenz
-                </Checkbox>
-                <Form.Item name="dayPreferences" noStyle>
-                  <Select
-                    mode="multiple"
-                    placeholder={
-                      noPreference
-                        ? "Keine Präferenz"
-                        : "Tagespräferenzen auswählen"
-                    }
-                    allowClear
-                    disabled={noPreference}
-                    style={{ width: "100%" }}
-                    onChange={handleDayPreferencesChange}
-                  >
-                    <Option value="Montag">Montag</Option>
-                    <Option value="Dienstag">Dienstag</Option>
-                    <Option value="Mittwoch">Mittwoch</Option>
-                    <Option value="Donnerstag">Donnerstag</Option>
-                    <Option value="Freitag">Freitag</Option>
-                    <Option value="Samstag">Samstag</Option>
-                  </Select>
+                <Form.Item label="Schichtpräferenz">
+                  <>
+                    <Checkbox
+                      checked={shiftNoPreference}
+                      onChange={(e) => {
+                        setShiftNoPreference(e.target.checked);
+                        form.setFieldsValue({ shiftPreference: [] });
+                      }}
+                    >
+                      Keine Präferenz
+                    </Checkbox>
+                    <Form.Item name="shiftPreference" noStyle>
+                      <Select
+                        mode="multiple"
+                        placeholder={
+                          shiftNoPreference
+                            ? "Keine Präferenz"
+                            : "Schichtpräferenzen auswählen"
+                        }
+                        allowClear
+                        disabled={shiftNoPreference}
+                        style={{ width: "100%" }}
+                        onChange={handleShiftPreferencesChange}
+                      >
+                        <Option value="Frühschicht">Frühschicht</Option>
+                        <Option value="Mittelschicht">Mittelschicht</Option>
+                        <Option value="Spätschicht">Spätschicht</Option>
+                      </Select>
+                    </Form.Item>
+                  </>
+                </Form.Item>
+
+                <Form.Item label="Tagespräferenz">
+                  <>
+                    <Checkbox
+                      checked={noPreference}
+                      onChange={(e) => {
+                        setNoPreference(e.target.checked);
+                        form.setFieldsValue({ dayPreferences: [] });
+                      }}
+                    >
+                      Keine Präferenz
+                    </Checkbox>
+                    <Form.Item name="dayPreferences" noStyle>
+                      <Select
+                        mode="multiple"
+                        placeholder={
+                          noPreference
+                            ? "Keine Präferenz"
+                            : "Tagespräferenzen auswählen"
+                        }
+                        allowClear
+                        disabled={noPreference}
+                        style={{ width: "100%" }}
+                        onChange={handleDayPreferencesChange}
+                      >
+                        <Option value="Montag">Montag</Option>
+                        <Option value="Dienstag">Dienstag</Option>
+                        <Option value="Mittwoch">Mittwoch</Option>
+                        <Option value="Donnerstag">Donnerstag</Option>
+                        <Option value="Freitag">Freitag</Option>
+                        <Option value="Samstag">Samstag</Option>
+                      </Select>
+                    </Form.Item>
+                  </>
                 </Form.Item>
               </>
-            </Form.Item>
+            )}
 
             <Form.Item label="Passwort">
               <Input.Password

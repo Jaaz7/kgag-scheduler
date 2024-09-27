@@ -176,7 +176,7 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
         icon: <CalendarOutlined />,
         label: (
           <Link to="/schedule-admin">
-            {translate("schedule-admin.title", "Admin Diesntplan")}
+            {translate("schedule-admin.title", "Dienstpläne")}
           </Link>
         ),
         style:
