@@ -139,7 +139,7 @@ export const ThemedSiderV2: React.FC<RefineThemedLayoutV2SiderProps> = ({
     setMobileSiderOpen(false);
     showModal({
       title: "Abmeldung bestätigen",
-      content: <p>Sind Sie sicher, dass Sie sich abmelden möchten?</p>,
+      content: () => <p>Sind Sie sicher, dass Sie sich abmelden möchten?</p>,
       onOk: confirmLogout,
       okText: "Abmelden",
       cancelText: "Abbrechen",

@@ -3,7 +3,7 @@
 import { Spin, Button, Col } from "antd";
 import React, { useEffect, useState } from "react";
 import { ScheduleGridAdminHB } from "@components/common/CalendarUserAdmin";
-import CreateScheduleButtonHB from "@lib/hb-algorithm/HB-CreateSchedule";
+import CreateScheduleButtonHB from "@lib/hb-algorithm/CreateSchedule";
 import hbImage from "@components/img/hb.png";
 
 export default function ScheduleAdminPage() {

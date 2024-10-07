@@ -11,7 +11,7 @@ import { Modal } from "antd";
 
 interface ModalConfig {
   title: string;
-  content: ReactNode;
+  content: () => ReactNode;
   onOk: () => void;
   okText?: string;
   cancelText?: string;
@@ -21,6 +21,7 @@ interface ModalContextType {
   showModal: (config: ModalConfig) => void;
   hideModal: () => void;
   isModalVisible: boolean;
+  modalConfig: ModalConfig | null; // Add modalConfig to context
 }
 
 const ModalContext = createContext<ModalContextType | undefined>(undefined);
@@ -55,7 +56,9 @@ export const ModalProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   return (
-    <ModalContext.Provider value={{ isModalVisible, showModal, hideModal }}>
+    <ModalContext.Provider
+      value={{ isModalVisible, showModal, hideModal, modalConfig }}
+    >
       {children}
       {modalConfig && (
         <Modal
@@ -64,13 +67,13 @@ export const ModalProvider: React.FC<{ children: ReactNode }> = ({
           open={isModalVisible}
           onOk={() => {
             if (modalConfig.onOk) modalConfig.onOk();
-            hideModal();
+            hideModal(); // Close the modal after onOk
           }}
           onCancel={hideModal}
           okText={modalConfig.okText || "OK"}
           cancelText={modalConfig.cancelText || "Cancel"}
         >
-          {modalConfig.content}
+          {modalConfig.content()}
         </Modal>
       )}
     </ModalContext.Provider>

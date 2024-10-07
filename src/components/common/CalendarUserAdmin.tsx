@@ -6,7 +6,6 @@ import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import weekOfYear from "dayjs/plugin/weekOfYear";
 import isoWeek from "dayjs/plugin/isoWeek";
-import CreateScheduleButtonHB from "@lib/hb-algorithm/HB-CreateSchedule";
 
 dayjs.extend(weekOfYear);
 dayjs.extend(isoWeek);
@@ -106,7 +105,15 @@ const getAllWeeksInMonth = (selectedMonth: number, currentYear: number) => {
   return allWeeks;
 };
 
-const getWeekDateRange = (week: Dayjs[], isMobile: boolean): string => {
+const getWeekDateRange = (
+  week: Dayjs[] | undefined,
+  isMobile: boolean
+): string => {
+  // Guard clause to check if the week array exists and has at least 7 days
+  if (!week || week.length < 7) {
+    return "Invalid week data";
+  }
+
   const startDate = week[0].format("DD.MM");
   const endDate = week[6].format("DD.MM");
 
@@ -128,7 +135,7 @@ export const ScheduleGridAdminHB: React.FC<ScheduleGridAdminHBProps> = ({
 }) => {
   // Use States and Variables-----------------------------------------
   // make the page scrollable to refresh page on mobile
-   // Use States and Variables-----------------------------------------
+  // Use States and Variables-----------------------------------------
   // make the page scrollable to refresh page on mobile
   useEffect(() => {
     const handleTouchStart = (e: TouchEvent) => {
@@ -385,21 +392,176 @@ export const ScheduleGridAdminHB: React.FC<ScheduleGridAdminHBProps> = ({
       >
         {/* Sticky Header */}
         <Row gutter={16} className="schedule-header-mobile-admin">
-        {/* Left-aligned circular Return Button */}
-        <Col>
+          {/* Left-aligned circular Return Button */}
+          <Col flex="0 0 auto">
+            <Button
+              onClick={() => setSelectedShop(null)} // Return to shops
+              icon={<LeftOutlined />} // Left arrow icon
+              shape="circle" // Circular button
+              size="large" // Adjust size to your preference
+              className="return-button-mobile" // Custom class for styling
+            />
+          </Col>
+
+          {/* Invisible Column to create spacing on the left side of the centered section */}
+          <Col flex="1 1 auto" />
+
+          {/* Centered Dropdown and Radio Group */}
+          <Col
+            flex="0 0 auto"
+            style={{ display: "flex", justifyContent: "center" }}
+          >
+            <Select
+              style={{ width: 115, marginRight: "8px" }}
+              value={selectedMonth}
+              onChange={handleMonthChange}
+            >
+              <Option
+                key={monthsData.previous.month}
+                value={monthsData.previous.month}
+              >
+                {months[monthsData.previous.month]} {monthsData.previous.year}
+              </Option>
+              <Option
+                key={monthsData.current.month}
+                value={monthsData.current.month}
+              >
+                {months[monthsData.current.month]} {monthsData.current.year}
+              </Option>
+              <Option key={monthsData.next.month} value={monthsData.next.month}>
+                {months[monthsData.next.month]} {monthsData.next.year}
+              </Option>
+            </Select>
+
+            <Radio.Group value={viewType} onChange={handleViewChange}>
+              <Radio.Button value="week">Woche</Radio.Button>
+              <Radio.Button value="month">Monat</Radio.Button>
+            </Radio.Group>
+          </Col>
+
+          {/* Invisible Column to create spacing on the right side of the centered section */}
+          <Col flex="1 1 auto" />
+        </Row>
+
+        {/* Scrollable Week Container with sliding and fading transition */}
+        <div
+          className="week-container-mobile"
+          style={{
+            transform: `translateX(${currentTranslate}px)`,
+            transition: isDragging ? "none" : "transform 0.2s ease-out",
+          }}
+        >
+          {allWeeks[currentWeek - 1] &&
+            allWeeks[currentWeek - 1].map((date: Dayjs, index: number) => {
+              const isToday = date.isSame(today, "day"); // Check if it's today
+              const isLeakedDay = date.month() !== selectedMonth; // Check if it's in the current month
+
+              return (
+                <div key={index} className="mobile-day">
+                  {/* Day and Date Container */}
+                  <Row gutter={16} align="middle">
+                    <Col span={24}>
+                      <div className="day-date-container">
+                        <span
+                          className={
+                            isLeakedDay
+                              ? "leaked-day-span-mobile" // Class for leaked days
+                              : "day-span-mobile"
+                          }
+                        >
+                          {fullDays[(date.day() + 6) % 7]}
+                        </span>
+                        <span
+                          className={
+                            isLeakedDay
+                              ? "leaked-date-span-mobile" // Class for leaked days
+                              : "date-span-mobile"
+                          }
+                        >
+                          {date.format("DD")}
+                        </span>
+                      </div>
+                    </Col>
+                  </Row>
+                  {/* Time Slots */}
+                  <Row gutter={16} align="top">
+                    {timeslots.map((slot, timeIndex) => (
+                      <Col key={timeIndex} span={24}>
+                        <div className="shift-timer-mobile">{slot}</div>
+                        <div
+                          className={`time-slot-mobile ${
+                            isToday ? "current-slot-mobile" : "" // Highlight current day
+                          } ${isLeakedDay ? "leaked-day-mobile" : ""}`} // Highlight leaked day
+                        >
+                          Slot {timeIndex + 1}
+                        </div>
+                      </Col>
+                    ))}
+                  </Row>
+                </div>
+              );
+            })}
+        </div>
+
+        {/* Footer with Week Navigation */}
+        <div className="footer-mobile">
+          <Title className="week-title-mobile" level={4}>
+            {`Woche `}
+            <span className="week-number">
+              {currentWeek}
+              {` `}
+            </span>
+            {getWeekDateRange(allWeeks[currentWeek - 1], isMobile)}
+          </Title>
+
+          <div className="navigation-buttons-mobile">
+            <Button
+              icon={<LeftOutlined />}
+              onClick={() => handleSwipeEnd("left")}
+              disabled={currentWeek === 1} // Disable if on the first week
+            />
+            <Button
+              icon={<RightOutlined />}
+              onClick={() => handleSwipeEnd("right")}
+              disabled={currentWeek === totalWeeks} // Disable if on the last week
+            />
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  if (isMobile) {
+    return renderMobile();
+  }
+
+  // Render Desktop Schedule-----------------------------------------
+  return (
+    <div className="schedule-grid">
+      {/* Header: Year, Month, View Type Switch */}
+      <Row gutter={16} className="schedule-header">
+        {/* Left aligned "Zurück" button */}
+        <Col style={{ flex: "0 0 auto" }}>
           <Button
-            onClick={() => setSelectedShop(null)} // Return to shops
-            icon={<LeftOutlined />} // Left arrow icon
-            shape="circle" // Circular button
-            size="large" // Adjust size to your preference
-            className="return-button-mobile" // Custom class for styling
-          />
+            onClick={() => setSelectedShop(null)} // Return to shop selection
+            icon={<LeftOutlined />} // Optional icon to indicate going back
+            style={{ marginRight: "8px" }}
+          >
+            Zurück zu den Shops
+          </Button>
         </Col>
 
-        {/* Centered Dropdown and Radio Group */}
-        <Col style={{ flexGrow: 1, display: 'flex', justifyContent: 'center' }}>
+        {/* Center aligned Month Selector and View Switch */}
+        <Col
+          style={{
+            flexGrow: 1,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
           <Select
-            style={{ width: 115, marginRight: "8px" }}
+            style={{ width: 115 }}
             value={selectedMonth}
             onChange={handleMonthChange}
           >
@@ -420,160 +582,22 @@ export const ScheduleGridAdminHB: React.FC<ScheduleGridAdminHBProps> = ({
             </Option>
           </Select>
 
-          <Radio.Group value={viewType} onChange={handleViewChange}>
+          <Radio.Group
+            value={viewType}
+            onChange={handleViewChange}
+            style={{ marginLeft: "10px" }}
+          >
             <Radio.Button value="week">Woche</Radio.Button>
             <Radio.Button value="month">Monat</Radio.Button>
           </Radio.Group>
         </Col>
+
+        {/* Right empty column to balance the space taken by the button on the left */}
+        <Col style={{ flex: "0 0 auto", visibility: "hidden" }}>
+          <Button icon={<LeftOutlined />}>Dummy</Button>{" "}
+          {/* Invisible dummy button */}
+        </Col>
       </Row>
-  
-        {/* Scrollable Week Container with sliding and fading transition */}
-        <div
-          className="week-container-mobile"
-          style={{
-            transform: `translateX(${currentTranslate}px)`,
-            transition: isDragging ? "none" : "transform 0.2s ease-out",
-          }}
-        >
-          {allWeeks[currentWeek - 1].map((date: Dayjs, index: number) => {
-            const isToday = date.isSame(today, "day");  // Check if it's today
-            const isLeakedDay = date.month() !== selectedMonth;  // Check if it's in the current month
-  
-            return (
-              <div key={index} className="mobile-day">
-                {/* Day and Date Container */}
-                <Row gutter={16} align="middle">
-                  <Col span={24}>
-                    <div className="day-date-container">
-                      <span
-                        className={
-                          isLeakedDay
-                            ? "leaked-day-span-mobile"  // Class for leaked days
-                            : "day-span-mobile"
-                        }
-                      >
-                        {fullDays[(date.day() + 6) % 7]}
-                      </span>
-                      <span
-                        className={
-                          isLeakedDay
-                            ? "leaked-date-span-mobile"  // Class for leaked days
-                            : "date-span-mobile"
-                        }
-                      >
-                        {date.format("DD")}
-                      </span>
-                    </div>
-                  </Col>
-                </Row>
-                {/* Time Slots */}
-                <Row gutter={16} align="top">
-                  {timeslots.map((slot, timeIndex) => (
-                    <Col key={timeIndex} span={24}>
-                      <div className="shift-timer-mobile">{slot}</div>
-                      <div
-                        className={`time-slot-mobile ${
-                          isToday ? "current-slot-mobile" : ""  // Highlight current day
-                        } ${isLeakedDay ? "leaked-day-mobile" : ""}`}  // Highlight leaked day
-                      >
-                        Slot {timeIndex + 1}
-                      </div>
-                    </Col>
-                  ))}
-                </Row>
-              </div>
-            );
-          })}
-        </div>
-  
-        {/* Footer with Week Navigation */}
-        <div className="footer-mobile">
-          <Title className="week-title-mobile" level={4}>
-            {`Woche `}
-            <span className="week-number">
-              {currentWeek}
-              {` `}
-            </span>
-            {getWeekDateRange(allWeeks[currentWeek - 1], isMobile)}
-          </Title>
-  
-          <div className="navigation-buttons-mobile">
-            <Button
-              icon={<LeftOutlined />}
-              onClick={() => handleSwipeEnd("left")}
-              disabled={currentWeek === 1}  // Disable if on the first week
-            />
-            <Button
-              icon={<RightOutlined />}
-              onClick={() => handleSwipeEnd("right")}
-              disabled={currentWeek === totalWeeks}  // Disable if on the last week
-            />
-          </div>
-        </div>
-      </div>
-    );
-  };
-  
-
-  if (isMobile) {
-    return renderMobile();
-  }
-
-  // Render Desktop Schedule-----------------------------------------
-  return (
-    <div className="schedule-grid">
-      {/* Header: Year, Month, View Type Switch */}
-      <Row gutter={16} className="schedule-header">
-       {/* Left aligned "Zurück" button */}
-       <Col style={{ flex: '0 0 auto' }}>
-        <Button
-          onClick={() => setSelectedShop(null)} // Return to shop selection
-          icon={<LeftOutlined />} // Optional icon to indicate going back
-          style={{ marginRight: "8px" }}
-        >
-          Zurück zu den Shops
-        </Button>
-      </Col>
-
-      {/* Center aligned Month Selector and View Switch */}
-      <Col style={{ flexGrow: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-        <Select
-          style={{ width: 115 }}
-          value={selectedMonth}
-          onChange={handleMonthChange}
-        >
-          <Option
-            key={monthsData.previous.month}
-            value={monthsData.previous.month}
-          >
-            {months[monthsData.previous.month]} {monthsData.previous.year}
-          </Option>
-          <Option
-            key={monthsData.current.month}
-            value={monthsData.current.month}
-          >
-            {months[monthsData.current.month]} {monthsData.current.year}
-          </Option>
-          <Option key={monthsData.next.month} value={monthsData.next.month}>
-            {months[monthsData.next.month]} {monthsData.next.year}
-          </Option>
-        </Select>
-
-        <Radio.Group
-          value={viewType}
-          onChange={handleViewChange}
-          style={{ marginLeft: "10px" }}
-        >
-          <Radio.Button value="week">Woche</Radio.Button>
-          <Radio.Button value="month">Monat</Radio.Button>
-        </Radio.Group>
-      </Col>
-
-      {/* Right empty column to balance the space taken by the button on the left */}
-      <Col style={{ flex: '0 0 auto', visibility: 'hidden' }}>
-        <Button icon={<LeftOutlined />}>Dummy</Button> {/* Invisible dummy button */}
-      </Col>
-    </Row>
 
       {/* Week Schedule */}
       <div

@@ -105,7 +105,15 @@ const getAllWeeksInMonth = (selectedMonth: number, currentYear: number) => {
   return allWeeks;
 };
 
-const getWeekDateRange = (week: Dayjs[], isMobile: boolean): string => {
+const getWeekDateRange = (
+  week: Dayjs[] | undefined,
+  isMobile: boolean
+): string => {
+  // Guard clause to check if the week array exists and has at least 7 days
+  if (!week || week.length < 7) {
+    return "Invalid week data";
+  }
+
   const startDate = week[0].format("DD.MM");
   const endDate = week[6].format("DD.MM");
 
@@ -406,7 +414,7 @@ export const ScheduleGrid: React.FC = () => {
             </Radio.Group>
           </Col>
         </Row>
-  
+
         {/* Scrollable Week Container with sliding and fading transition */}
         <div
           className="week-container-mobile"
@@ -415,57 +423,58 @@ export const ScheduleGrid: React.FC = () => {
             transition: isDragging ? "none" : "transform 0.2s ease-out",
           }}
         >
-          {allWeeks[currentWeek - 1].map((date: Dayjs, index: number) => {
-            const isToday = date.isSame(today, "day");  // Check if it's today
-            const isLeakedDay = date.month() !== selectedMonth;  // Check if it's in the current month
-  
-            return (
-              <div key={index} className="mobile-day">
-                {/* Day and Date Container */}
-                <Row gutter={16} align="middle">
-                  <Col span={24}>
-                    <div className="day-date-container">
-                      <span
-                        className={
-                          isLeakedDay
-                            ? "leaked-day-span-mobile"  // Class for leaked days
-                            : "day-span-mobile"
-                        }
-                      >
-                        {fullDays[(date.day() + 6) % 7]}
-                      </span>
-                      <span
-                        className={
-                          isLeakedDay
-                            ? "leaked-date-span-mobile"  // Class for leaked days
-                            : "date-span-mobile"
-                        }
-                      >
-                        {date.format("DD")}
-                      </span>
-                    </div>
-                  </Col>
-                </Row>
-                {/* Time Slots */}
-                <Row gutter={16} align="top">
-                  {timeslots.map((slot, timeIndex) => (
-                    <Col key={timeIndex} span={24}>
-                      <div className="shift-timer-mobile">{slot}</div>
-                      <div
-                        className={`time-slot-mobile ${
-                          isToday ? "current-slot-mobile" : ""  // Highlight current day
-                        } ${isLeakedDay ? "leaked-day-mobile" : ""}`}  // Highlight leaked day
-                      >
-                        Slot {timeIndex + 1}
+          {allWeeks[currentWeek - 1] &&
+            allWeeks[currentWeek - 1].map((date: Dayjs, index: number) => {
+              const isToday = date.isSame(today, "day"); // Check if it's today
+              const isLeakedDay = date.month() !== selectedMonth; // Check if it's in the current month
+
+              return (
+                <div key={index} className="mobile-day">
+                  {/* Day and Date Container */}
+                  <Row gutter={16} align="middle">
+                    <Col span={24}>
+                      <div className="day-date-container">
+                        <span
+                          className={
+                            isLeakedDay
+                              ? "leaked-day-span-mobile" // Class for leaked days
+                              : "day-span-mobile"
+                          }
+                        >
+                          {fullDays[(date.day() + 6) % 7]}
+                        </span>
+                        <span
+                          className={
+                            isLeakedDay
+                              ? "leaked-date-span-mobile" // Class for leaked days
+                              : "date-span-mobile"
+                          }
+                        >
+                          {date.format("DD")}
+                        </span>
                       </div>
                     </Col>
-                  ))}
-                </Row>
-              </div>
-            );
-          })}
+                  </Row>
+                  {/* Time Slots */}
+                  <Row gutter={16} align="top">
+                    {timeslots.map((slot, timeIndex) => (
+                      <Col key={timeIndex} span={24}>
+                        <div className="shift-timer-mobile">{slot}</div>
+                        <div
+                          className={`time-slot-mobile ${
+                            isToday ? "current-slot-mobile" : "" // Highlight current day
+                          } ${isLeakedDay ? "leaked-day-mobile" : ""}`} // Highlight leaked day
+                        >
+                          Slot {timeIndex + 1}
+                        </div>
+                      </Col>
+                    ))}
+                  </Row>
+                </div>
+              );
+            })}
         </div>
-  
+
         {/* Footer with Week Navigation */}
         <div className="footer-mobile">
           <Title className="week-title-mobile" level={4}>
@@ -476,24 +485,23 @@ export const ScheduleGrid: React.FC = () => {
             </span>
             {getWeekDateRange(allWeeks[currentWeek - 1], isMobile)}
           </Title>
-  
+
           <div className="navigation-buttons-mobile">
             <Button
               icon={<LeftOutlined />}
               onClick={() => handleSwipeEnd("left")}
-              disabled={currentWeek === 1}  // Disable if on the first week
+              disabled={currentWeek === 1} // Disable if on the first week
             />
             <Button
               icon={<RightOutlined />}
               onClick={() => handleSwipeEnd("right")}
-              disabled={currentWeek === totalWeeks}  // Disable if on the last week
+              disabled={currentWeek === totalWeeks} // Disable if on the last week
             />
           </div>
         </div>
       </div>
     );
   };
-  
 
   if (isMobile) {
     return renderMobile();

@@ -454,7 +454,9 @@ export const AccountSettings = ({
   const handleShowDeleteAvatarModal = () => {
     showModal({
       title: "Löschen des Avatars bestätigen",
-      content: <p>Sind Sie sicher, dass Sie Ihren Avatar löschen möchten?</p>,
+      content: () => (
+        <p>Sind Sie sicher, dass Sie Ihren Avatar löschen möchten?</p>
+      ),
       onOk: handleDeleteAvatar,
       okText: "Löschen",
       cancelText: "Abbrechen",
