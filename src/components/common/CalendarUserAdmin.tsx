@@ -1,11 +1,83 @@
 import React, { useEffect, useState } from "react";
-import { Row, Col, Button, Typography, Select, Radio } from "antd";
-import { LeftOutlined, RightOutlined } from "@ant-design/icons";
+import {Tag, Avatar, Row, Col, Button, Typography, Select, Radio, Popover, Dropdown } from "antd";
+import { LeftOutlined, MoreOutlined, RightOutlined, UserOutlined } from "@ant-design/icons";
 import dayjs, { Dayjs } from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import weekOfYear from "dayjs/plugin/weekOfYear";
 import isoWeek from "dayjs/plugin/isoWeek";
+
+
+
+
+
+
+
+
+
+
+// Morning shift workers
+const morningWorkers = [
+  { id: 1, name: 'John Doe', trimmed: 'John Do', color: '#f56a00' },
+  { id: 2, name: 'Jane Johnson', trimmed: 'Jane Jo', color: '#7265e6' },
+  { id: 3, name: 'Hannah Smith', trimmed: 'Hannah Sm', color: '#ffbf00' },
+];
+
+// Middle shift workers
+const middleWorkers = [
+  { id: 4, name: 'Michael Brown', trimmed: 'Michael Br', color: '#4682b4' },
+];
+
+// Evening shift workers
+const eveningWorkers = [
+  { id: 5, name: 'Olivia Martinez', trimmed: 'Olivia Ma', color: '#13c2c2' },
+  { id: 6, name: 'James Garcia', trimmed: 'James Ga', color: '#eb2f96' },
+  { id: 7, name: 'William Wilson', trimmed: 'William Wi', color: '#d46b08' },
+];
+
+const getWorkersForSlot = (timeIndex: number) => {
+  switch (timeIndex) {
+    case 0:
+      return morningWorkers;
+    case 1:
+      return middleWorkers;
+    case 2:
+      return eveningWorkers;
+    default:
+      return [];
+  }
+};
+
+const optionsMenuItems = [
+  {
+    key: 'remove',
+    label: 'Etikett entfernen',
+  },
+  {
+    key: 'sick',
+    label: 'Krank',
+  },
+  {
+    key: 'holiday',
+    label: 'Urlaub',
+  },
+  {
+    key: 'absent',
+    label: 'Abwesend',
+  },
+];
+
+const allWorkers = [
+  ...morningWorkers,
+  ...middleWorkers,
+  ...eveningWorkers,
+];
+
+
+
+
+
+
 
 dayjs.extend(weekOfYear);
 dayjs.extend(isoWeek);
@@ -135,8 +207,6 @@ export const ScheduleGridAdminHB: React.FC<ScheduleGridAdminHBProps> = ({
 }) => {
   // Use States and Variables-----------------------------------------
   // make the page scrollable to refresh page on mobile
-  // Use States and Variables-----------------------------------------
-  // make the page scrollable to refresh page on mobile
   useEffect(() => {
     const handleTouchStart = (e: TouchEvent) => {
       const weekContainer = document.querySelector(".week-container-mobile");
@@ -204,6 +274,8 @@ export const ScheduleGridAdminHB: React.FC<ScheduleGridAdminHBProps> = ({
   const monthsData = getAdjacentMonths(currentMonth, currentYear);
   const [disableTransition, setDisableTransition] = useState(false);
   const [hoveredDayIndex, setHoveredDayIndex] = useState<number | null>(null);
+  const [visiblePopovers, setVisiblePopovers] = useState<{ [key: string]: boolean }>({});
+  const [etiquettes, setEtiquettes] = useState<{ [key: string]: string }>({});
 
   // Helper Functions---------------------------------------------------
 
@@ -382,6 +454,43 @@ export const ScheduleGridAdminHB: React.FC<ScheduleGridAdminHBProps> = ({
     setIsDragging(false); // Reset dragging state
   };
 
+
+
+// Function to handle menu item clicks
+const handleMenuClick = (
+  e: { key: string },
+  worker: { id?: number; name: string; trimmed?: string; color?: string },
+  tagId: string
+) => {
+  // Define mapping from menu keys to etiquette abbreviations
+  const etiquetteMap: { [key: string]: string } = {
+    sick: "K",
+    holiday: "U",
+    absent: "A",
+  };
+
+  if (e.key === "remove") {
+    // Remove etiquette
+    setEtiquettes((prevState) => ({
+      ...prevState,
+      [tagId]: "",
+    }));
+  } else if (etiquetteMap[e.key]) {
+    // Set etiquette abbreviation
+    setEtiquettes((prevState) => ({
+      ...prevState,
+      [tagId]: etiquetteMap[e.key],
+    }));
+  }
+
+  // Close the Popover after action
+  setVisiblePopovers((prevState) => ({
+    ...prevState,
+    [tagId]: false,
+  }));
+};
+
+
   const renderMobile = () => {
     return (
       <div
@@ -456,6 +565,8 @@ export const ScheduleGridAdminHB: React.FC<ScheduleGridAdminHBProps> = ({
               const isToday = date.isSame(today, "day"); // Check if it's today
               const isLeakedDay = date.month() !== selectedMonth; // Check if it's in the current month
 
+              
+
               return (
                 <div key={index} className="mobile-day">
                   {/* Day and Date Container */}
@@ -493,7 +604,106 @@ export const ScheduleGridAdminHB: React.FC<ScheduleGridAdminHBProps> = ({
                             isToday ? "current-slot-mobile" : "" // Highlight current day
                           } ${isLeakedDay ? "leaked-day-mobile" : ""}`} // Highlight leaked day
                         >
-                          Slot {timeIndex + 1}
+
+
+
+
+
+                          {/* Workers assigned to this shift */}
+                          <div className="workers-container-mobile">
+                            {getWorkersForSlot(timeIndex).map((worker) => {
+                              // Generate a unique tagId for each tag instance
+                              const tagId = `${date.format(
+                                "YYYY-MM-DD"
+                              )}_${timeIndex}_${worker.id}`;
+                              const etiquette = etiquettes[tagId]
+                                ? ` (${etiquettes[tagId]})`
+                                : "";
+
+                              return (
+                                <Popover
+                                  key={tagId}
+                                  content={
+                                    <div
+                                      style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                      }}
+                                    >
+                                      <Avatar
+                                        size="large"
+                                        icon={<UserOutlined />}
+                                        style={{
+                                          marginRight: "8px",
+                                          backgroundColor: worker.color,
+                                          color: "#fff",
+                                        }}
+                                      />
+                                      <span>{worker.name}</span>
+                                    </div>
+                                  }
+                                  trigger={isMobile ? "click" : "hover"}
+                                  placement="topLeft"
+                                  open={visiblePopovers[tagId] || false}
+                                  onOpenChange={(visible) => {
+                                    setVisiblePopovers((prevState) => ({
+                                      ...prevState,
+                                      [tagId]: visible,
+                                    }));
+                                  }}
+                                >
+                                  <Tag
+                                    color={
+                                      isLeakedDay ? "#938f8f" : worker.color
+                                    }
+                                    style={{
+                                      color: "#fff",
+                                      padding: "4px 12px",
+                                      fontSize: "14px",
+                                      borderRadius: "6px",
+                                      display: "flex",
+                                      alignItems: "center",
+                                    }}
+                                  >
+                                    <span>{worker.trimmed + etiquette}</span>
+                                    {/* Wrap Dropdown in a div to stop propagation */}
+                                    <div
+                                      onClick={(e) => {
+                                        e.stopPropagation(); // Prevent click from bubbling up to Popover
+                                      }}
+                                    >
+                                      <Dropdown
+                                        menu={{
+                                          items: optionsMenuItems,
+                                          onClick: (e) =>
+                                            handleMenuClick(e, worker, tagId),
+                                        }}
+                                        trigger={["click"]}
+                                        onOpenChange={(open) => {
+                                          if (open) {
+                                            setVisiblePopovers((prevState) => ({
+                                              ...prevState,
+                                              [tagId]: false,
+                                            }));
+                                          }
+                                        }}
+                                      >
+                                        <MoreOutlined
+                                          style={{
+                                            marginLeft: "8px",
+                                            cursor: "pointer",
+                                          }}
+                                        />
+                                      </Dropdown>
+                                    </div>
+                                  </Tag>
+                                </Popover>
+                              );
+                            })}
+                          </div>
+
+
+
                         </div>
                       </Col>
                     ))}
@@ -502,7 +712,6 @@ export const ScheduleGridAdminHB: React.FC<ScheduleGridAdminHBProps> = ({
               );
             })}
         </div>
-
         {/* Footer with Week Navigation */}
         <div className="footer-mobile">
           <Title className="week-title-mobile" level={4}>
@@ -526,6 +735,7 @@ export const ScheduleGridAdminHB: React.FC<ScheduleGridAdminHBProps> = ({
               disabled={currentWeek === totalWeeks} // Disable if on the last week
             />
           </div>
+          
         </div>
       </div>
     );
@@ -618,6 +828,7 @@ export const ScheduleGridAdminHB: React.FC<ScheduleGridAdminHBProps> = ({
               const isLeakedDay = date.month() !== selectedMonth;
               const isToday = date.isSame(today, "day");
 
+
               return (
                 <Row gutter={50} key={index} className="main-schedule-row">
                   {/* Day Column */}
@@ -665,7 +876,101 @@ export const ScheduleGridAdminHB: React.FC<ScheduleGridAdminHBProps> = ({
                       onMouseEnter={() => handleMouseEnter(index)}
                       onMouseLeave={handleMouseLeave}
                     >
-                      Week {weekIndex + 1}, {days[index]}, Slot {timeIndex + 1}
+                       {/* Workers assigned to this time slot */}
+                       <div className="workers-container">
+                          {getWorkersForSlot(timeIndex).map((worker) => {
+                            // Generate a unique tagId for each tag instance
+                            const tagId = `${date.format(
+                              "YYYY-MM-DD"
+                            )}_${timeIndex}_${worker.id}`;
+                            const etiquette = etiquettes[tagId]
+                              ? ` (${etiquettes[tagId]})`
+                              : "";
+
+                            return (
+                              <Popover
+                                key={tagId}
+                                content={
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                    }}
+                                  >
+                                    <Avatar
+                                      size="large"
+                                      icon={<UserOutlined />}
+                                      style={{
+                                        marginRight: "8px",
+                                        backgroundColor: worker.color,
+                                        color: "#fff",
+                                      }}
+                                    />
+                                    <span>{worker.name}</span>
+                                  </div>
+                                }
+                                trigger={isMobile ? "click" : "hover"}
+                                placement="top"
+                                open={visiblePopovers[tagId] || false}
+                                onOpenChange={(visible) => {
+                                  setVisiblePopovers((prevState) => ({
+                                    ...prevState,
+                                    [tagId]: visible,
+                                  }));
+                                }}
+                              >
+                                <Tag
+                                  color={
+                                    isLeakedDay ? "#938f8f" : worker.color
+                                  }
+                                  style={{
+                                    color: "#fff",
+                                    padding: "3px 5px",
+                                    fontSize: "13px",
+                                    borderRadius: "6px",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    marginTop: "15px",
+                                  }}
+                                >
+                                  <span>{worker.trimmed + etiquette}</span>
+                                  {/* Wrap Dropdown in a div to stop propagation */}
+                                  <div
+                                    onClick={(e) => {
+                                      e.stopPropagation(); // Prevent click from bubbling up to Popover
+                                    }}
+                                  >
+                                    <Dropdown
+                                      menu={{
+                                        items: optionsMenuItems,
+                                        onClick: (e) =>
+                                          handleMenuClick(
+                                            e,
+                                            worker,
+                                            tagId
+                                          ),
+                                      }}
+                                      trigger={["click"]}
+                                      onOpenChange={(open) => {
+                                        if (open) {
+                                          setVisiblePopovers((prevState) => ({
+                                            ...prevState,
+                                            [tagId]: false,
+                                          }));
+                                        }
+                                      }}
+                                    >
+                                      <MoreOutlined
+                                        style={{ cursor: "pointer" }}
+                                      />
+                                    </Dropdown>
+                                  </div>
+                                </Tag>
+                              </Popover>
+                            );
+                          })}
+                        </div>
+
                     </Col>
                   ))}
                 </Row>
@@ -694,6 +999,17 @@ export const ScheduleGridAdminHB: React.FC<ScheduleGridAdminHBProps> = ({
           disabled={currentWeek === totalWeeks}
         />
       </div>
+      {/* **Worker Summary Section for Desktop** */}
+<div className="worker-summary-desktop">
+  <Title level={5}>Arbeitsübersicht</Title>
+  <div className="worker-summary-list-desktop">
+    {allWorkers.map((worker) => (
+      <div key={worker.id} className="worker-summary-item-desktop">
+        {worker.trimmed}: 7
+      </div>
+    ))}
+  </div>
+</div>
     </div>
   );
 };

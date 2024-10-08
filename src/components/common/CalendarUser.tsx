@@ -1,11 +1,85 @@
 import React, { useEffect, useState } from "react";
-import { Row, Col, Button, Typography, Select, Radio } from "antd";
-import { LeftOutlined, RightOutlined } from "@ant-design/icons";
+import { Row, Col, Button, Typography, Select, Radio, Dropdown, Popover, Tag, Avatar } from "antd";
+import { LeftOutlined, MoreOutlined, RightOutlined, UserOutlined } from "@ant-design/icons";
 import dayjs, { Dayjs } from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import weekOfYear from "dayjs/plugin/weekOfYear";
 import isoWeek from "dayjs/plugin/isoWeek";
+
+
+
+
+
+
+
+
+// Morning shift workers
+const morningWorkers = [
+  { id: 1, name: 'John Doe', trimmed: 'John Do', color: '#f56a00' },
+  { id: 2, name: 'Jane Johnson', trimmed: 'Jane Jo', color: '#7265e6' },
+  { id: 3, name: 'Hannah Smith', trimmed: 'Hannah Sm', color: '#ffbf00' },
+];
+
+// Middle shift workers
+const middleWorkers = [
+  { id: 4, name: 'Michael Brown', trimmed: 'Michael Br', color: '#4682b4' },
+];
+
+// Evening shift workers
+const eveningWorkers = [
+  { id: 5, name: 'Olivia Martinez', trimmed: 'Olivia Ma', color: '#13c2c2' },
+  { id: 6, name: 'James Garcia', trimmed: 'James Ga', color: '#eb2f96' },
+  { id: 7, name: 'William Wilson', trimmed: 'William Wi', color: '#d46b08' },
+];
+
+const getWorkersForSlot = (timeIndex: number) => {
+  switch (timeIndex) {
+    case 0:
+      return morningWorkers;
+    case 1:
+      return middleWorkers;
+    case 2:
+      return eveningWorkers;
+    default:
+      return [];
+  }
+};
+
+const optionsMenuItems = [
+  {
+    key: 'remove',
+    label: 'Etikett entfernen',
+  },
+  {
+    key: 'sick',
+    label: 'Krank',
+  },
+  {
+    key: 'holiday',
+    label: 'Urlaub',
+  },
+  {
+    key: 'absent',
+    label: 'Abwesend',
+  },
+];
+
+const allWorkers = [
+  ...morningWorkers,
+  ...middleWorkers,
+  ...eveningWorkers,
+];
+
+
+
+
+
+
+
+
+
+
 
 dayjs.extend(weekOfYear);
 dayjs.extend(isoWeek);
@@ -196,6 +270,7 @@ export const ScheduleGrid: React.FC = () => {
   const monthsData = getAdjacentMonths(currentMonth, currentYear);
   const [disableTransition, setDisableTransition] = useState(false);
   const [hoveredDayIndex, setHoveredDayIndex] = useState<number | null>(null);
+  const [visiblePopovers, setVisiblePopovers] = useState<{ [key: string]: boolean }>({});
 
   // Helper Functions---------------------------------------------------
 
@@ -465,7 +540,72 @@ export const ScheduleGrid: React.FC = () => {
                             isToday ? "current-slot-mobile" : "" // Highlight current day
                           } ${isLeakedDay ? "leaked-day-mobile" : ""}`} // Highlight leaked day
                         >
-                          Slot {timeIndex + 1}
+                          {/* Workers assigned to this shift */}
+                          <div className="workers-container-mobile">
+                            {getWorkersForSlot(timeIndex).map((worker) => {
+                              // Generate a unique tagId for each tag instance
+                              const tagId = `${date.format(
+                                "YYYY-MM-DD"
+                              )}_${timeIndex}_${worker.id}`;
+                              
+                              return (
+                                <Popover
+                                  key={tagId}
+                                  content={
+                                    <div
+                                      style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                      }}
+                                    >
+                                      <Avatar
+                                        size="large"
+                                        icon={<UserOutlined />}
+                                        style={{
+                                          marginRight: "8px",
+                                          backgroundColor: worker.color,
+                                          color: "#fff",
+                                        }}
+                                      />
+                                      <span>{worker.name}</span>
+                                    </div>
+                                  }
+                                  trigger={isMobile ? "click" : "hover"}
+                                  placement="topLeft"
+                                  open={visiblePopovers[tagId] || false}
+                                  onOpenChange={(visible) => {
+                                    setVisiblePopovers((prevState) => ({
+                                      ...prevState,
+                                      [tagId]: visible,
+                                    }));
+                                  }}
+                                >
+                                  <Tag
+                                    color={
+                                      isLeakedDay ? "#938f8f" : worker.color
+                                    }
+                                    style={{
+                                      color: "#fff",
+                                      padding: "4px 12px",
+                                      fontSize: "14px",
+                                      borderRadius: "6px",
+                                      display: "flex",
+                                      alignItems: "center",
+                                    }}
+                                  >
+                                    <span>{worker.trimmed}</span>
+                                    {/* Wrap Dropdown in a div to stop propagation */}
+                                    <div
+                                      onClick={(e) => {
+                                        e.stopPropagation(); // Prevent click from bubbling up to Popover
+                                      }}
+                                    >
+                                    </div>
+                                  </Tag>
+                                </Popover>
+                              );
+                            })}
+                          </div>
                         </div>
                       </Col>
                     ))}
@@ -623,7 +763,75 @@ export const ScheduleGrid: React.FC = () => {
                       onMouseEnter={() => handleMouseEnter(index)}
                       onMouseLeave={handleMouseLeave}
                     >
-                      Week {weekIndex + 1}, {days[index]}, Slot {timeIndex + 1}
+                      {/* Workers assigned to this time slot */}
+                      <div className="workers-container">
+                          {getWorkersForSlot(timeIndex).map((worker) => {
+                            // Generate a unique tagId for each tag instance
+                            const tagId = `${date.format(
+                              "YYYY-MM-DD"
+                            )}_${timeIndex}_${worker.id}`;
+                            
+
+                            return (
+                              <Popover
+                                key={tagId}
+                                content={
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                    }}
+                                  >
+                                    <Avatar
+                                      size="large"
+                                      icon={<UserOutlined />}
+                                      style={{
+                                        marginRight: "8px",
+                                        backgroundColor: worker.color,
+                                        color: "#fff",
+                                      }}
+                                    />
+                                    <span>{worker.name}</span>
+                                  </div>
+                                }
+                                trigger={isMobile ? "click" : "hover"}
+                                placement="top"
+                                open={visiblePopovers[tagId] || false}
+                                onOpenChange={(visible) => {
+                                  setVisiblePopovers((prevState) => ({
+                                    ...prevState,
+                                    [tagId]: visible,
+                                  }));
+                                }}
+                              >
+                                <Tag
+                                  color={
+                                    isLeakedDay ? "#938f8f" : worker.color
+                                  }
+                                  style={{
+                                    color: "#fff",
+                                    padding: "3px 5px",
+                                    fontSize: "13px",
+                                    borderRadius: "6px",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    marginTop: "15px",
+                                  }}
+                                >
+                                  <span>{worker.trimmed}</span>
+                                  {/* Wrap Dropdown in a div to stop propagation */}
+                                  <div
+                                    onClick={(e) => {
+                                      e.stopPropagation(); // Prevent click from bubbling up to Popover
+                                    }}
+                                  >
+
+                                  </div>
+                                </Tag>
+                              </Popover>
+                            );
+                          })}
+                        </div>
                     </Col>
                   ))}
                 </Row>

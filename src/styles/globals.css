@@ -291,6 +291,10 @@ html body .ant-layout-sider-trigger {
   font-weight: bold;
 }
 
+.mobile-day + .mobile-day .day-date-container {
+  border-top: 1px solid #000000 !important;
+}
+
 .main-schedule-row-mobile {
   align-items: center;
   display: flex;
@@ -360,4 +364,75 @@ html body .ant-layout-sider-trigger {
 .schedule-header-create-schedule {
   position: fixed;
   align-items: center;
+}
+
+
+
+
+
+
+.workers-container-mobile {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center; /* Optional: Align items vertically centered */
+}
+
+.workers-container {
+  display: flex;
+  justify-content: center; /* Center items horizontally */
+}
+
+
+
+
+
+
+
+/* Worker Summary Section for Mobile */
+.worker-summary-mobile {
+  padding: 10px;
+  background-color: #f9f9f9; /* Light background for contrast */
+  border-top: 1px solid #e0e0e0;
+}
+
+.worker-summary-list-mobile {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px; /* Spacing between items */
+  justify-content: center; /* Center items horizontally */
+  padding: 0;
+  margin: 0;
+}
+
+.worker-summary-item-mobile {
+  font-size: 14px;
+  background-color: #ffffff;
+  padding: 5px 10px;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Worker Summary Section for Desktop */
+.worker-summary-desktop {
+  padding: 10px;
+  background-color: #ffffff; /* Light background for contrast */
+  border-top: 1px solid #e0e0e0;
+  margin-top: 20px; /* Space above the summary */
+}
+
+.worker-summary-list-desktop {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px; /* Spacing between items */
+  justify-content: center; /* Center items horizontally */
+  padding: 0;
+  margin: 0;
+}
+
+.worker-summary-item-desktop {
+  font-size: 14px;
+  background-color: #ffffff;
+  padding: 5px 15px;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
